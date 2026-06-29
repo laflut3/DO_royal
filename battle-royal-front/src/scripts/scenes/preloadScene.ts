@@ -29,6 +29,10 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.atlas("knight", "assets/atlas/players/knight.png", "assets/atlas/players/knight.json")
     this.load.atlas("medic", "assets/atlas/players/medic.png", "assets/atlas/players/medic.json")
     this.load.atlas("rogue", "assets/atlas/players/rogue.png", "assets/atlas/players/rogue.json")
+    this.load.atlas("nova", "assets/atlas/players/nova.png", "assets/atlas/players/nova.json")
+    this.load.atlas("ember", "assets/atlas/players/ember.png", "assets/atlas/players/ember.json")
+    this.load.atlas("cipher", "assets/atlas/players/cipher.png", "assets/atlas/players/cipher.json")
+    this.load.atlas("oni", "assets/atlas/players/oni.png", "assets/atlas/players/oni.json")
   }
 
   create() {

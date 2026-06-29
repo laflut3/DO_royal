@@ -72,7 +72,7 @@ export default class MainScene extends Phaser.Scene {
   pauseSettingsRows : Map<string, Phaser.GameObjects.Text>
   waitingControl : keyof ControlSettings | null
   isPausedByMenu : boolean
-  lobbyRadius : number
+  lobbyBounds : Phaser.Geom.Rectangle
 
   constructor() {
     super({ key: 'MainScene' });
@@ -103,7 +103,6 @@ export default class MainScene extends Phaser.Scene {
     // Set player's speed
     this.player.velocity = this.frontConf.playerSpeed;
     this.participatesInRound = false;
-    this.lobbyRadius = 175;
 
     // Set up the arrows to control the player
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -167,14 +166,11 @@ export default class MainScene extends Phaser.Scene {
 
     this.gameMenu = new GameMenu(this, this.frontConf, this.backEndWebSocket, this.gameOwner);
     this.createPauseMenu();
+    this.createLobbyBounds();
 
   }
 
   update(time: number, delta: number) {
-    if (Phaser.Input.Keyboard.JustDown(this.pauseKey) && this.backEndWebSocket.gameStatus == GameStatus.PLAYING) {
-      this.togglePauseMenu();
-    }
-
     if(this.backEndWebSocket.gameStatus == GameStatus.LOBBY || this.backEndWebSocket.gameStatus == GameStatus.FINISHED) {
       this.gameMenu.update(this.cameraManager.mainCamera.scrollX, this.cameraManager.mainCamera.scrollY);
     } else {
@@ -348,6 +344,9 @@ export default class MainScene extends Phaser.Scene {
       this.minimapGraphics.fillCircle(scalePointX(pickup.marker.x), scalePointY(pickup.marker.y), 2);
     });
 
+    this.minimapGraphics.fillStyle(0xf1c40f, 1);
+    this.minimapGraphics.fillCircle(scalePointX(this.player.x), scalePointY(this.player.y), 4);
+
     const now = Date.now();
     this.multiPlayers.playersMulti.forEach((player: Player) => {
       if (!player.isAlive || !this.visibleMinimapEnemies.has(player.uuid)) {
@@ -514,19 +513,31 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
+  createLobbyBounds() {
+    this.lobbyBounds = new Phaser.Geom.Rectangle(128, 96, 2944, 512);
+  }
+
   keepPlayerInLobbyBeforeGame() {
     if (this.backEndWebSocket.gameStatus !== GameStatus.LOBBY) {
       return;
     }
-    const distanceFromLobby = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.map.lobbyPoint.x, this.map.lobbyPoint.y);
-    if (distanceFromLobby <= this.lobbyRadius) {
-      return;
-    }
-    const angle = Phaser.Math.Angle.Between(this.map.lobbyPoint.x, this.map.lobbyPoint.y, this.player.x, this.player.y);
-    this.player.setPosition(
-      this.map.lobbyPoint.x + Math.cos(angle) * this.lobbyRadius,
-      this.map.lobbyPoint.y + Math.sin(angle) * this.lobbyRadius
+    const body = <Phaser.Physics.Arcade.Body>this.player.body;
+    const halfWidth = body.width / 2;
+    const halfHeight = body.height / 2;
+    const clampedX = Phaser.Math.Clamp(
+      this.player.x,
+      this.lobbyBounds.left + halfWidth,
+      this.lobbyBounds.right - halfWidth
     );
+    const clampedY = Phaser.Math.Clamp(
+      this.player.y,
+      this.lobbyBounds.top + halfHeight,
+      this.lobbyBounds.bottom - halfHeight
+    );
+    if (clampedX !== this.player.x || clampedY !== this.player.y) {
+      this.player.setPosition(clampedX, clampedY);
+      this.player.updateHud();
+    }
   }
 
   updateLocalGhostAppearance() {
@@ -576,6 +587,17 @@ export default class MainScene extends Phaser.Scene {
     this.pauseMenu.add(quitButton);
 
     this.createPauseSettingsPanel();
+    this.input.keyboard.on("keydown-ESC", (event: KeyboardEvent) => {
+      event.preventDefault();
+      if (event.repeat || !this.canUsePauseMenu()) {
+        return;
+      }
+      this.togglePauseMenu();
+    });
+  }
+
+  canUsePauseMenu(): boolean {
+    return this.backEndWebSocket.gameStatus === GameStatus.STARTING || this.backEndWebSocket.gameStatus === GameStatus.PLAYING;
   }
 
   createPauseButton(x: number, y: number, label: string, callback: Function): Array<Phaser.GameObjects.GameObject> {

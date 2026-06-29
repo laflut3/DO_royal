@@ -1,6 +1,6 @@
 {
     "frames": {
-        "medic-back-walk.000": {
+        "ember-back-walk.000": {
             "frame": {
                 "x": 97,
                 "y": 1,
@@ -20,7 +20,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.001": {
+        "ember-back-walk.001": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -40,7 +40,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.002": {
+        "ember-back-walk.002": {
             "frame": {
                 "x": 131,
                 "y": 1,
@@ -60,7 +60,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.003": {
+        "ember-back-walk.003": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -80,7 +80,7 @@
                 "h": 64
             }
         },
-        "medic-back": {
+        "ember-back": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -100,7 +100,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.000": {
+        "ember-front-walk.000": {
             "frame": {
                 "x": 1,
                 "y": 1,
@@ -120,7 +120,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.001": {
+        "ember-front-walk.001": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -140,7 +140,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.002": {
+        "ember-front-walk.002": {
             "frame": {
                 "x": 65,
                 "y": 1,
@@ -160,7 +160,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.003": {
+        "ember-front-walk.003": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -180,7 +180,7 @@
                 "h": 64
             }
         },
-        "medic-front": {
+        "ember-front": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -200,7 +200,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.000": {
+        "ember-left-walk.000": {
             "frame": {
                 "x": 1,
                 "y": 46,
@@ -220,7 +220,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.001": {
+        "ember-left-walk.001": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -240,7 +240,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.002": {
+        "ember-left-walk.002": {
             "frame": {
                 "x": 33,
                 "y": 46,
@@ -260,7 +260,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.003": {
+        "ember-left-walk.003": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -280,7 +280,7 @@
                 "h": 64
             }
         },
-        "medic-left": {
+        "ember-left": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -300,7 +300,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.000": {
+        "ember-right-walk.000": {
             "frame": {
                 "x": 65,
                 "y": 46,
@@ -320,7 +320,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.001": {
+        "ember-right-walk.001": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -340,7 +340,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.002": {
+        "ember-right-walk.002": {
             "frame": {
                 "x": 165,
                 "y": 1,
@@ -360,7 +360,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.003": {
+        "ember-right-walk.003": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -380,7 +380,7 @@
                 "h": 64
             }
         },
-        "medic-right": {
+        "ember-right": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -404,7 +404,7 @@
     "meta": {
         "app": "http://www.codeandweb.com/texturepacker",
         "version": "1.0",
-        "image": "medic.png",
+        "image": "ember.png",
         "format": "RGBA8888",
         "size": {
             "w": 196,

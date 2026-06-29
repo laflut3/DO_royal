@@ -1,6 +1,6 @@
 {
     "frames": {
-        "medic-back-walk.000": {
+        "nova-back-walk.000": {
             "frame": {
                 "x": 97,
                 "y": 1,
@@ -20,7 +20,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.001": {
+        "nova-back-walk.001": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -40,7 +40,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.002": {
+        "nova-back-walk.002": {
             "frame": {
                 "x": 131,
                 "y": 1,
@@ -60,7 +60,7 @@
                 "h": 64
             }
         },
-        "medic-back-walk.003": {
+        "nova-back-walk.003": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -80,7 +80,7 @@
                 "h": 64
             }
         },
-        "medic-back": {
+        "nova-back": {
             "frame": {
                 "x": 97,
                 "y": 44,
@@ -100,7 +100,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.000": {
+        "nova-front-walk.000": {
             "frame": {
                 "x": 1,
                 "y": 1,
@@ -120,7 +120,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.001": {
+        "nova-front-walk.001": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -140,7 +140,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.002": {
+        "nova-front-walk.002": {
             "frame": {
                 "x": 65,
                 "y": 1,
@@ -160,7 +160,7 @@
                 "h": 64
             }
         },
-        "medic-front-walk.003": {
+        "nova-front-walk.003": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -180,7 +180,7 @@
                 "h": 64
             }
         },
-        "medic-front": {
+        "nova-front": {
             "frame": {
                 "x": 33,
                 "y": 1,
@@ -200,7 +200,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.000": {
+        "nova-left-walk.000": {
             "frame": {
                 "x": 1,
                 "y": 46,
@@ -220,7 +220,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.001": {
+        "nova-left-walk.001": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -240,7 +240,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.002": {
+        "nova-left-walk.002": {
             "frame": {
                 "x": 33,
                 "y": 46,
@@ -260,7 +260,7 @@
                 "h": 64
             }
         },
-        "medic-left-walk.003": {
+        "nova-left-walk.003": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -280,7 +280,7 @@
                 "h": 64
             }
         },
-        "medic-left": {
+        "nova-left": {
             "frame": {
                 "x": 131,
                 "y": 44,
@@ -300,7 +300,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.000": {
+        "nova-right-walk.000": {
             "frame": {
                 "x": 65,
                 "y": 46,
@@ -320,7 +320,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.001": {
+        "nova-right-walk.001": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -340,7 +340,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.002": {
+        "nova-right-walk.002": {
             "frame": {
                 "x": 165,
                 "y": 1,
@@ -360,7 +360,7 @@
                 "h": 64
             }
         },
-        "medic-right-walk.003": {
+        "nova-right-walk.003": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -380,7 +380,7 @@
                 "h": 64
             }
         },
-        "medic-right": {
+        "nova-right": {
             "frame": {
                 "x": 163,
                 "y": 44,
@@ -404,7 +404,7 @@
     "meta": {
         "app": "http://www.codeandweb.com/texturepacker",
         "version": "1.0",
-        "image": "medic.png",
+        "image": "nova.png",
         "format": "RGBA8888",
         "size": {
             "w": 196,
