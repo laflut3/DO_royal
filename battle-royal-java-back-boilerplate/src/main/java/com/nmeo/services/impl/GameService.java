@@ -1,0 +1,118 @@
+package com.nmeo.services.impl;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.nmeo.models.Bullet;
+import com.nmeo.models.Game;
+import com.nmeo.models.GameSession;
+import com.nmeo.models.GameStatus;
+import com.nmeo.models.Player;
+
+public class GameService {
+    private final Map<UUID, GameSession> sessions = new ConcurrentHashMap<>();
+
+    public void createGame(UUID gameId, String gameName) {
+        if (gameId == null || gameName == null || gameName.isBlank()) {
+            throw new IllegalArgumentException("gameId and gameName are required");
+        }
+        GameSession session = new GameSession(new Game(gameId, gameName));
+        if (sessions.putIfAbsent(gameId, session) != null) {
+            throw new IllegalArgumentException("A game with the same uuid already exists.");
+        }
+    }
+
+    public List<Game> listGames() {
+        return sessions.values().stream()
+                .map(GameSession::getGame)
+                .sorted(Comparator.comparing(Game::getName))
+                .toList();
+    }
+
+    public Optional<GameSession> getSession(UUID gameId) {
+        return Optional.ofNullable(sessions.get(gameId));
+    }
+
+    public boolean exists(UUID gameId) {
+        return sessions.containsKey(gameId);
+    }
+
+    public GameStatus getGameStatus(UUID gameId) {
+        return getSession(gameId)
+                .map(GameSession::getStatus)
+                .orElse(GameStatus.IDLE);
+    }
+
+    public String getWinnerName(UUID gameId) {
+        return getSession(gameId)
+                .map(GameSession::getWinnerName)
+                .orElse("");
+    }
+
+    public void updateGameStatus(UUID gameId, GameStatus status) {
+        GameSession session = sessionOrThrow(gameId);
+        session.setStatus(status);
+        if (status == GameStatus.LOBBY || status == GameStatus.STARTING) {
+            session.setWinnerName("");
+            session.getPlayers().values().forEach(player -> {
+                player.setIsAlive(true);
+                if (player.getMaxHealth() == null || player.getMaxHealth() <= 0) {
+                    player.setMaxHealth(100);
+                }
+                player.setHealth(player.getMaxHealth());
+                if (player.getMaxShield() == null || player.getMaxShield() <= 0) {
+                    player.setMaxShield(100);
+                }
+                player.setShield(0);
+            });
+        }
+    }
+
+    public void addBullet(UUID gameId, Bullet bullet) {
+        GameSession session = sessionOrThrow(gameId);
+        if (bullet == null || bullet.getUuid() == null || bullet.getUuid().isBlank()) {
+            throw new IllegalArgumentException("bullet uuid is required");
+        }
+        session.getBullets().put(bullet.getUuid(), bullet);
+    }
+
+    public void removeBullet(UUID gameId, Bullet bullet) {
+        GameSession session = sessionOrThrow(gameId);
+        if (bullet == null || bullet.getUuid() == null || bullet.getUuid().isBlank()) {
+            throw new IllegalArgumentException("bullet uuid is required");
+        }
+        session.getBullets().remove(bullet.getUuid());
+    }
+
+    public void updateFinishedState(UUID gameId) {
+        GameSession session = sessionOrThrow(gameId);
+        if (session.getStatus() != GameStatus.PLAYING || session.getPlayers().size() <= 1) {
+            return;
+        }
+
+        List<Player> alivePlayers = session.getPlayers().values().stream()
+                .filter(player -> Boolean.TRUE.equals(player.getIsAlive()))
+                .toList();
+        if (alivePlayers.size() == 1) {
+            session.setStatus(GameStatus.FINISHED);
+            session.setWinnerName(alivePlayers.get(0).getName());
+        }
+    }
+
+    public boolean removeIfEmpty(UUID gameId) {
+        GameSession session = sessions.get(gameId);
+        if (session == null || !session.getPlayers().isEmpty()) {
+            return false;
+        }
+        return sessions.remove(gameId, session);
+    }
+
+    private GameSession sessionOrThrow(UUID gameId) {
+        return getSession(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("game not found"));
+    }
+}

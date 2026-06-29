@@ -1,0 +1,111 @@
+package com.nmeo.handlers;
+
+import java.util.UUID;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.nmeo.dto.WebSocketMessage;
+import com.nmeo.services.BroadcastService;
+import com.nmeo.services.BroadcastService.DisconnectedSession;
+import com.nmeo.services.IPlayerService;
+import com.nmeo.services.impl.GameService;
+
+import io.javalin.websocket.WsCloseContext;
+import io.javalin.websocket.WsConnectContext;
+import io.javalin.websocket.WsMessageContext;
+
+public class SocketHandler {
+
+    private static final Logger logger = LogManager.getLogger(SocketHandler.class.getName());
+
+    public static void handleNewConnection(WsConnectContext ctx, BroadcastService broadcastService) {
+        logger.info("A new connection has been established");
+    }
+
+    public static void handleCloseConnection(
+            WsCloseContext ctx,
+            IPlayerService playerService,
+            GameService gameService,
+            BroadcastService broadcastService) {
+        logger.info("Web socket closed");
+        DisconnectedSession disconnectedSession = broadcastService.unregister(ctx);
+        if (disconnectedSession == null) {
+            return;
+        }
+
+        UUID gameId = playerService.removePlayer(disconnectedSession.getSocketUuid());
+        if (gameId != null) {
+            if (gameService.removeIfEmpty(gameId)) {
+                logger.info("Game {} removed because it has no players anymore", gameId);
+                return;
+            }
+            gameService.updateFinishedState(gameId);
+            broadcastService.broadcastGameState(gameId, playerService, gameService);
+        }
+    }
+
+    public static void handleNewMessage(
+            WsMessageContext ctx,
+            IPlayerService playerService,
+            GameService gameService,
+            BroadcastService broadcastService) {
+        WebSocketMessage newMessage = ctx.message(WebSocketMessage.class);
+        logger.debug("handleNewMessage type={} gameId={}", newMessage.getType(), newMessage.getGameId());
+        try {
+            switch(newMessage.getType()) {
+                case NEW_PLAYER:
+                    playerService.createPlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
+                    broadcastService.registerPlayerSession(ctx, newMessage.getSocketUuid(), newMessage.getGameId());
+                    broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    break;
+                case NEW_GAME:
+                    gameService.createGame(newMessage.getGameId(), newMessage.getGameName());
+                    ctx.send(WebSocketMessage.ok());
+                    break;
+                case LIST_GAME:
+                    ctx.send(WebSocketMessage.gameList(gameService.listGames()));
+                    break;
+                case PLAYER_MOVED:
+                    playerService.updatePlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
+                    broadcastService.registerPlayerSession(ctx, newMessage.getSocketUuid(), newMessage.getGameId());
+                    gameService.updateFinishedState(newMessage.getGameId());
+                    broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    break;
+                case PLAYER_DESTROY:
+                    playerService.updatePlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
+                    gameService.updateFinishedState(newMessage.getGameId());
+                    broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    break;
+                case NEW_BULLET:
+                    gameService.addBullet(newMessage.getGameId(), newMessage.getBullet());
+                    broadcastService.broadcastMessageInGameExcept(
+                            newMessage.getGameId(),
+                            newMessage.getSocketUuid(),
+                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()));
+                    ctx.send(WebSocketMessage.ok());
+                    break;
+                case BULLET_DESTROY:
+                    gameService.removeBullet(newMessage.getGameId(), newMessage.getBullet());
+                    broadcastService.broadcastMessageInGameExcept(
+                            newMessage.getGameId(),
+                            newMessage.getSocketUuid(),
+                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()));
+                    ctx.send(WebSocketMessage.ok());
+                    break;
+                case GAME_STATE:
+                    gameService.updateGameStatus(newMessage.getGameId(), newMessage.getGameStatus());
+                    broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    ctx.send(WebSocketMessage.ok());
+                    break;
+                default:
+                    logger.error("Unsupported message type");
+                    ctx.send(WebSocketMessage.ko("Unsupported message type"));
+                    break;
+            }
+        } catch (IllegalArgumentException exception) {
+            logger.error(exception.getMessage());
+            ctx.send(WebSocketMessage.ko(exception.getMessage()));
+        }
+    }
+}

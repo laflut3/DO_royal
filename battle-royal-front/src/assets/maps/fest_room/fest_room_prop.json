@@ -1,0 +1,60 @@
+{"frames": {
+    "prop-start":
+    {
+        "frame": {"x":613,"y":132,"w":22,"h":23},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":22,"h":23},
+        "sourceSize": {"w":22,"h":23}
+    },
+    "dresser":
+    {
+        "frame": {"x":448,"y":133,"w":32,"h":69},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":32,"h":69},
+        "sourceSize": {"w":32,"h":69}
+    },
+    "barrel":
+    {
+        "frame": {"x":930,"y":1290,"w":28,"h":38},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":28,"h":38},
+        "sourceSize": {"w":28,"h":38}
+    },
+    "fla":
+    {
+        "frame": {"x":32,"y":449,"w":32,"h":32},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+        "sourceSize": {"w":32,"h":32}
+    },
+    "yellow_seeds":
+    {
+        "frame": {"x":32,"y":519,"w":32,"h":25},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":32,"h":25},
+        "sourceSize": {"w":32,"h":25}
+    },
+    "green_seeds":
+    {
+        "frame": {"x":32,"y":583,"w":32,"h":25},
+        "rotated": false,
+        "trimmed": true,
+        "spriteSourceSize": {"x":0,"y":0,"w":32,"h":25},
+        "sourceSize": {"w":32,"h":25}
+    }
+},
+    "meta": {
+        "app": "http://www.codeandweb.com/texturepacker",
+        "version": "1.0",
+        "image": "fest_room_prop.png",
+        "format": "RGBA8888",
+        "size": {"w":1024,"h":2048},
+        "scale": "1",
+        "smartupdate": "$TexturePacker:SmartUpdate:153aa30e8e4e7c6fb0cfe9ff6ead8419:0bf85290c274470ae6499145fc94b88b:cbce6b53f0f49e0bf15173c25c41f876$"
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "socketUuid":"6ea7effc-075c-4183-89ca-95f562443564",
+    "type":1,
+    "player":{
+       "uuid":"b530f1e7-703e-40f1-abcd-d5b7283569a2",
+       "x":1434.66666666667,
+       "y":264,
+       "velocityX":0,
+       "velocityY":0,
+       "direction":0,
+       "atlas":"misa",
+       "frame":"misa-back",
+       "width":30,
+       "height":40,
+       "isAlive" : true
+    },
+    "gameId":"66e7b43b-e8e4-46ba-b8f9-bdf1984e08d0"
+ }

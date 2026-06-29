@@ -1,0 +1,2 @@
+https://gitlab.com/meolabs-learning-materials/java/battle-royal/battle-royal-front
+https://gitlab.com/meolabs-learning-materials/java/battle-royal/battle-royal-java-back-boilerplate

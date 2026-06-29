@@ -1,0 +1,14 @@
+{
+    "network": {
+        "backEndIP": "127.0.0.1",
+        "backEndPort" : 8080,
+        "width" : 1280,
+        "height" : 720
+    },
+    "gameplay": {
+        "playerSpeed" : 200,
+        "bulletSpeed" : 800,
+        "visionScope" : 20,
+        "visionAlpha" : 13
+    }
+}
