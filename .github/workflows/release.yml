@@ -1,0 +1,161 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: laflut3/do-royal-backend
+  FRONTEND_IMAGE_NAME: laflut3/do-royal-frontend
+  BACKEND_CONTEXT: ./battle-royal-java-back-boilerplate
+  FRONTEND_CONTEXT: ./battle-royal-front
+
+jobs:
+  release:
+    name: Build, publish and deploy
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate SemVer tag
+        id: version
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const refName = context.ref.replace("refs/tags/", "");
+            const semver = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+            if (!semver.test(refName)) {
+              core.setFailed(`Invalid SemVer tag '${refName}'. Expected vMAJOR.MINOR.PATCH.`);
+              return;
+            }
+            const version = refName.slice(1);
+            core.setOutput("version", version);
+            core.setOutput("docker_tag", version.replace(/\+/g, "-"));
+
+      - name: Checkout release tag
+        uses: actions/checkout@v6
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata backend
+        id: backend_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.docker_tag }}
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Docker metadata frontend
+        id: frontend_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.docker_tag }}
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.BACKEND_CONTEXT }}
+          file: ${{ env.BACKEND_CONTEXT }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.backend_meta.outputs.tags }}
+          labels: ${{ steps.backend_meta.outputs.labels }}
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.FRONTEND_CONTEXT }}
+          file: ${{ env.FRONTEND_CONTEXT }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.frontend_meta.outputs.tags }}
+          labels: ${{ steps.frontend_meta.outputs.labels }}
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+      - name: Verify published images
+        env:
+          IMAGE_TAG: ${{ steps.version.outputs.docker_tag }}
+        run: |
+          docker buildx imagetools inspect "${CONTAINER_REGISTRY}/${BACKEND_IMAGE_NAME}:${IMAGE_TAG}"
+          docker buildx imagetools inspect "${CONTAINER_REGISTRY}/${FRONTEND_IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          make_latest: true
+
+      - name: Checkout main for GitOps deploy
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          token: ${{ secrets.GITOPS_TOKEN || github.token }}
+
+      - name: Update production desired state
+        id: gitops
+        env:
+          IMAGE_TAG: ${{ steps.version.outputs.docker_tag }}
+        run: |
+          ruby <<'RUBY'
+          require "yaml"
+
+          values_file = "infrastructure/deploiement-kube/charts/do-royal/environments/prod.yaml"
+          values = YAML.load_file(values_file)
+          values["images"]["backend"]["tag"] = ENV.fetch("IMAGE_TAG")
+          values["images"]["frontend"]["tag"] = ENV.fetch("IMAGE_TAG")
+          values["global"]["deployId"] = ENV.fetch("GITHUB_SHA")
+          File.write(values_file, values.to_yaml)
+          RUBY
+
+          if git diff --quiet -- infrastructure/deploiement-kube/charts/do-royal/environments/prod.yaml; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Push production deployment
+        if: steps.gitops.outputs.changed == 'true'
+        env:
+          IMAGE_TAG: ${{ steps.version.outputs.docker_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add infrastructure/deploiement-kube/charts/do-royal/environments/prod.yaml
+          git commit -m "deploy(prod): promote ${IMAGE_TAG}"
+          git push origin HEAD:main

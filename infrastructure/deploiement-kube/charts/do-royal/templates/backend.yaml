@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: do-royal-backend
+  namespace: {{ include "do-royal.namespace" . }}
+  labels:
+    app: do-royal-backend
+    app.kubernetes.io/component: backend
+    {{- include "do-royal.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  revisionHistoryLimit: {{ .Values.backend.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      app: do-royal-backend
+  template:
+    metadata:
+      labels:
+        app: do-royal-backend
+        app.kubernetes.io/component: backend
+        {{- include "do-royal.labels" . | nindent 8 }}
+      annotations:
+        do-royal.io/deploy-id: {{ .Values.global.deployId | quote }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          image: {{ include "do-royal.image" .Values.images.backend | quote }}
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: websocket
+              containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: do-royal-backend
+  namespace: {{ include "do-royal.namespace" . }}
+  labels:
+    app: do-royal-backend
+    app.kubernetes.io/component: backend
+    {{- include "do-royal.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: do-royal-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

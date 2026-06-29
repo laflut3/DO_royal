@@ -19,7 +19,7 @@ export default class GameMap {
         tileSetName.forEach((tileSet : string) => {
             this.tileSets.push(this.tileMap.addTilesetImage(tileSet, tileSet));
         });
-        
+
         // Create map layers
         this.belowLayer = this.tileMap.createLayer("Below", this.tileSets, 0, 0);
         this.btwBelowWorld = this.tileMap.createLayer("BtwBelowAndWorld", this.tileSets, 0, 0);
@@ -28,7 +28,7 @@ export default class GameMap {
         this.belowLayer.setDepth(0);
         this.btwBelowWorld.setDepth(1);
         this.worldLayer.setDepth(2);
-        
+
         this.worldLayer.setCollisionByExclusion([-1]);
         this.worldLayer.setCollisionByProperty({ collides: true });
 

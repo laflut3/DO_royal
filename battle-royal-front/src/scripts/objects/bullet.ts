@@ -32,10 +32,10 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
         // Adding bullet to scene
         scene.add.existing(this)
         scene.physics.add.existing(this)
-                
+
         // Parameter usefull to destroy a remote player who has been disconnected
         this.hasBeenUpdated = true;
-        
+
         // Set velocity parameters
         this.velocity = bulletSpeed;
 

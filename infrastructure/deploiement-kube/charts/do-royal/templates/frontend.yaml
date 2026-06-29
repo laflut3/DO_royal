@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: do-royal-frontend
+  namespace: {{ include "do-royal.namespace" . }}
+  labels:
+    app: do-royal-frontend
+    app.kubernetes.io/component: frontend
+    {{- include "do-royal.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  revisionHistoryLimit: {{ .Values.frontend.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      app: do-royal-frontend
+  template:
+    metadata:
+      labels:
+        app: do-royal-frontend
+        app.kubernetes.io/component: frontend
+        {{- include "do-royal.labels" . | nindent 8 }}
+      annotations:
+        do-royal.io/deploy-id: {{ .Values.global.deployId | quote }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: {{ include "do-royal.image" .Values.images.frontend | quote }}
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 5000
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: do-royal-frontend
+  namespace: {{ include "do-royal.namespace" . }}
+  labels:
+    app: do-royal-frontend
+    app.kubernetes.io/component: frontend
+    {{- include "do-royal.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: do-royal-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5000

@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+        exclude: ^(battle-royal-front/(src/assets/|test-results/|tmp\.json$)|doc/LiensGitLab\.txt$)
+      - id: check-merge-conflict
+      - id: check-yaml
+        exclude: ^infrastructure/deploiement-kube/charts/.*/templates/
+      - id: end-of-file-fixer
+        exclude: ^(battle-royal-front/(src/assets/|test-results/|tmp\.json$)|doc/LiensGitLab\.txt$)
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: ^(battle-royal-front/(src/assets/|test-results/|tmp\.json$)|doc/LiensGitLab\.txt$)
+      - id: trailing-whitespace
+        exclude: ^(battle-royal-front/(src/assets/|test-results/|tmp\.json$)|doc/LiensGitLab\.txt$)
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.14.0
+    hooks:
+      - id: hadolint-docker
+        args: [--config, .hadolint.yaml]
