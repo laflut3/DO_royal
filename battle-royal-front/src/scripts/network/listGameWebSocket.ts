@@ -12,7 +12,7 @@ export default class ListGamesWebSocket {
     constructor(menuScene : MenuScene) {
         this.menuScene = menuScene;
         let frontConf = new FrontConf();
-        let url = "ws://" + frontConf.backEndIp + ":" + frontConf.backEndPort + "/game";
+        let url = frontConf.webSocketUrl();
         this.webSocket = new WebSocket(url);
         this.uuid = Phaser.Utils.String.UUID();
         this.webSocket.onopen = (ev: Event) => {

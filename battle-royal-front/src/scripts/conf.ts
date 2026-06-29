@@ -20,4 +20,11 @@ export default class FrontConf {
         this.visionScope = config.gameplay.visionScope;
         this.visionAlpha = config.gameplay.visionAlpha;
     }
+
+    webSocketUrl(): string {
+        const secure = window.location.protocol === "https:";
+        const protocol = secure ? "wss" : "ws";
+        const port = secure ? "" : `:${this.backEndPort}`;
+        return `${protocol}://${this.backEndIp}${port}/game`;
+    }
 }

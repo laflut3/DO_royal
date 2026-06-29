@@ -65,7 +65,7 @@ export default class BackEndWebSocket {
         this.finishCallback = finishCallback;
         this.remoteBulletCallback = remoteBulletCallback;
         let frontConf = new FrontConf();
-        let url = "ws://" + frontConf.backEndIp + ":" + frontConf.backEndPort + "/game";
+        let url = frontConf.webSocketUrl();
 
         this.webSocket = new WebSocket(url);
         this.uuid = Phaser.Utils.String.UUID();
