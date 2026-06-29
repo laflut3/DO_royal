@@ -5,10 +5,10 @@ global:
 images:
   backend:
     repository: ghcr.io/laflut3/do-royal-backend
-    tag: 1.1.0
+    tag: 1.1.1
   frontend:
     repository: ghcr.io/laflut3/do-royal-frontend
-    tag: 1.1.0
+    tag: 1.1.1
 ingress:
   host: do-royal.polydo.dev
   tls:
