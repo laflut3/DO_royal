@@ -125,7 +125,17 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: main
-          token: ${{ secrets.GITOPS_TOKEN || github.token }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          persist-credentials: false
+
+      - name: Check GitOps token is configured
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        run: |
+          if [ -z "${GITOPS_TOKEN}" ]; then
+            echo "::error title=Missing GITOPS_TOKEN::Create a repository secret named GITOPS_TOKEN with Contents: Read and write permissions."
+            exit 1
+          fi
 
       - name: Update production desired state
         id: gitops
@@ -153,9 +163,11 @@ jobs:
         if: steps.gitops.outputs.changed == 'true'
         env:
           IMAGE_TAG: ${{ steps.version.outputs.docker_tag }}
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITOPS_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add infrastructure/deploiement-kube/charts/do-royal/environments/prod.yaml
           git commit -m "deploy(prod): promote ${IMAGE_TAG}"
           git push origin HEAD:main
