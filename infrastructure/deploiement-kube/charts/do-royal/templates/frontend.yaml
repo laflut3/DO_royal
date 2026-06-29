@@ -45,6 +45,9 @@ spec:
           ports:
             - name: http
               containerPort: 5000
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             tcpSocket:
               port: 5000
@@ -57,6 +60,9 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
