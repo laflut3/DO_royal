@@ -14,3 +14,6 @@ ingress:
   host: do-royal.polydo.dev
   tls:
     secretName: do-royal-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
