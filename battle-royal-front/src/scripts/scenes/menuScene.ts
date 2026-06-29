@@ -58,7 +58,11 @@ export default class MenuScene extends Phaser.Scene {
             { name: "Scout", atlas: "scout", description: "Fast forest runner" },
             { name: "Knight", atlas: "knight", description: "Armored frontliner" },
             { name: "Medic", atlas: "medic", description: "Field support" },
-            { name: "Rogue", atlas: "rogue", description: "Masked ambusher" }
+            { name: "Rogue", atlas: "rogue", description: "Masked ambusher" },
+            { name: "Nova", atlas: "nova", description: "Stellar duelist" },
+            { name: "Ember", atlas: "ember", description: "Volcanic striker" },
+            { name: "Cipher", atlas: "cipher", description: "Neon hacker" },
+            { name: "Oni", atlas: "oni", description: "Moonlit yokai" }
         ];
         // Fill the back ground with texture
         for(let w = 0; w <= this.frontConf.width; w+= 512 ) {
