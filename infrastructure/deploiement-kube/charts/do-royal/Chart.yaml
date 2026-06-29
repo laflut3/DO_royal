@@ -1,0 +1,6 @@
+apiVersion: v2
+name: do-royal
+description: Helm chart for DO Royal
+type: application
+version: 0.1.0
+appVersion: "latest"

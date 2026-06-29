@@ -17,13 +17,13 @@ export default class GameObjectsGroup extends Phaser.GameObjects.Group {
                     key : this.atlasName,
                     scene: scene,
                     frame: objectName
-                }); 
+                });
                 // Create the corresponding sprites on map
                 objets.forEach(
                     (object : Phaser.GameObjects.GameObject) => {
                         let sprite = <Phaser.Physics.Arcade.Sprite> object;
                         // Tiled is giving Left-Up corner
-                        // Phaser is using Left-Down corner as origin :P 
+                        // Phaser is using Left-Down corner as origin :P
                         sprite.y += sprite.height - 1 ;
                         this.add(sprite);
                         scene.add.existing(sprite);

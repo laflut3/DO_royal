@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: do-royal
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: prod
+  template:
+    metadata:
+      name: "do-royal-{{env}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/laflut3/DO_royal.git
+        targetRevision: main
+        path: infrastructure/deploiement-kube/charts/do-royal
+        helm:
+          releaseName: "do-royal-{{env}}"
+          valueFiles:
+            - "environments/{{env}}.yaml"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{env}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

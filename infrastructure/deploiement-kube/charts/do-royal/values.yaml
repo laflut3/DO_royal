@@ -1,0 +1,44 @@
+global:
+  environment: prod
+  deployId: latest
+  imagePullSecrets: []
+
+images:
+  backend:
+    repository: ghcr.io/laflut3/do-royal-backend
+    tag: latest
+  frontend:
+    repository: ghcr.io/laflut3/do-royal-frontend
+    tag: latest
+
+backend:
+  replicas: 1
+  revisionHistoryLimit: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  replicas: 1
+  revisionHistoryLimit: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  name: do-royal
+  className: traefik
+  host: do-royal.polydo.dev
+  tls:
+    secretName: do-royal-tls
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
