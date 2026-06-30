@@ -8,6 +8,7 @@ export default class ListGamesWebSocket {
     menuScene : MenuScene
     onCreateSuccess?: () => void
     onCreateError?: (errorMessage: string) => void
+    pendingMessages : Array<object>
 
     constructor(menuScene : MenuScene) {
         this.menuScene = menuScene;
@@ -15,7 +16,9 @@ export default class ListGamesWebSocket {
         let url = frontConf.webSocketUrl();
         this.webSocket = new WebSocket(url);
         this.uuid = Phaser.Utils.String.UUID();
+        this.pendingMessages = new Array<object>();
         this.webSocket.onopen = (ev: Event) => {
+            this.flushPendingMessages();
             this.sendServerListRequest();
         };
 
@@ -42,14 +45,16 @@ export default class ListGamesWebSocket {
     connect() { }
 
     disconnect() {
-        this.webSocket.close();
+        if (this.webSocket.readyState === WebSocket.OPEN || this.webSocket.readyState === WebSocket.CONNECTING) {
+            this.webSocket.close();
+        }
     }
 
     sendServerListRequest() {
         let message = {};
         message[KeyWords.SOCKET_UUID] = this.uuid;
         message[KeyWords.MESSAGE_TYPE] = MessageType.LIST_GAME;
-        this.webSocket.send(JSON.stringify(message));
+        this.sendMessage(message);
     }
 
     createNewServer(serverName : string, gameUuid : string, onSuccess : () => void, onError : (errorMessage: string) => void) {
@@ -60,7 +65,24 @@ export default class ListGamesWebSocket {
         message[KeyWords.MESSAGE_TYPE] = MessageType.NEW_GAME;
         message[KeyWords.GAME_ID] = gameUuid;
         message[KeyWords.GAME_NAME] = serverName;
-        this.webSocket.send(JSON.stringify(message));
+        this.sendMessage(message);
+    }
+
+    private sendMessage(message : object) {
+        if (this.webSocket.readyState === WebSocket.OPEN) {
+            this.webSocket.send(JSON.stringify(message));
+            return;
+        }
+        if (this.webSocket.readyState === WebSocket.CONNECTING) {
+            this.pendingMessages.push(message);
+        }
+    }
+
+    private flushPendingMessages() {
+        this.pendingMessages.forEach((message : object) => {
+            this.webSocket.send(JSON.stringify(message));
+        });
+        this.pendingMessages = new Array<object>();
     }
 
 }

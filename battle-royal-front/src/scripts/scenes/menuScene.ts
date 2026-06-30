@@ -21,6 +21,7 @@ interface SkinOption {
 export default class MenuScene extends Phaser.Scene {
     serverList : Map<string, string>
     graphicServerList : Array<Phaser.GameObjects.Text>
+    graphicServerRows : Array<Phaser.GameObjects.Rectangle>
     selectedServer : string | undefined
     webSocket : ListGamesWebSocket
     frontConf : FrontConf
@@ -180,6 +181,7 @@ export default class MenuScene extends Phaser.Scene {
 
         this.serverList = new Map<string, string>();
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
+        this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
 
         /* Create Section */
         this.add.rectangle(this.frontConf.width/2 + 300, this.frontConf.height/2 + 85, 390, 210, 0x0d1b24, 0.86).setStrokeStyle(2, 0xf4d35e, 0.45);
@@ -249,10 +251,14 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     goToMainScene(data : object) {
+        if (this.webSocket) {
+            this.webSocket.disconnect();
+        }
         this.scene.start('MainScene',  data);
     }
 
     createGame() {
+        this.closeActiveTextInput(true);
         if(this.pseudoText.text === null || this.pseudoText.text === "Enter pseudo") {
             this.pseudoText.setColor("red");
             return;
@@ -278,6 +284,7 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     joinServer() {
+        this.closeActiveTextInput(true);
         if(this.pseudoText.text === null || this.pseudoText.text === "Enter pseudo") {
             this.pseudoText.setColor("red");
             return;
@@ -481,19 +488,36 @@ export default class MenuScene extends Phaser.Scene {
 
     loadServerList(serverList : Map<string, string>) {
         this.graphicServerList.forEach( (textElement : Phaser.GameObjects.Text) => { textElement.destroy()});
+        this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.destroy()});
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
+        this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
         this.serverList = serverList;
+        this.selectedServer = undefined;
+        this.textJoin.setColor("#f6fbff");
         let i = 15;
         this.serverList.forEach( ( value : string, key : string) => {
-            let textServer = this.add.text(this.frontConf.width/2 - 300, this.frontConf.height/2 + 35 + i , key);
+            const rowY = this.frontConf.height/2 + 35 + i;
+            let rowServer = this.add.rectangle(this.frontConf.width/2 - 300, rowY, 330, 26, 0x122b36, 0.01);
+            rowServer.setInteractive({ useHandCursor: true });
+            let textServer = this.add.text(this.frontConf.width/2 - 300, rowY , key);
             textServer.setOrigin(0.5, 0.5);
-            textServer.setInteractive();
+            textServer.setInteractive({ useHandCursor: true });
 
-            textServer.on('clicked', (button : Physics.Arcade.Sprite) => {
+            const selectServer = () => {
                 this.graphicServerList.forEach( (textElement : Phaser.GameObjects.Text) => { textElement.setColor("white");});
+                this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.setFillStyle(0x122b36, 0.01);});
                 textServer.setColor("red");
-                this.selectedServer = this.serverList.get(textServer.text);
-            });
+                rowServer.setFillStyle(0x244c5a, 0.75);
+                this.selectedServer = value;
+                this.textJoin.setColor("#f6fbff");
+            };
+            textServer.on('clicked', selectServer);
+            rowServer.on('clicked', selectServer);
+            textServer.on('pointerdown', selectServer);
+            rowServer.on('pointerdown', selectServer);
+            textServer.on('pointerup', () => this.joinServer());
+            rowServer.on('pointerup', () => this.joinServer());
+            this.graphicServerRows.push(rowServer);
             this.graphicServerList.push(textServer);
             i += this.frontConf.height/30;
         });
