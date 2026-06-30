@@ -80,6 +80,9 @@ export default class MainScene extends Phaser.Scene {
   chatInputText : Phaser.GameObjects.Text
   chatInputDom : Phaser.GameObjects.DOMElement | null
   isChatEditing : boolean
+  chatFadeTimer : Phaser.Time.TimerEvent | null
+  lastChatMessageKey : string
+  lastChatMessageAt : number
 
   constructor() {
     super({ key: 'MainScene' });
@@ -122,6 +125,9 @@ export default class MainScene extends Phaser.Scene {
     this.isPausedByMenu = false;
     this.isChatEditing = false;
     this.chatInputDom = null;
+    this.chatFadeTimer = null;
+    this.lastChatMessageKey = "";
+    this.lastChatMessageAt = 0;
     this.chatMessages = new Array<string>();
 
     // Create distant players array
@@ -659,6 +665,9 @@ export default class MainScene extends Phaser.Scene {
     });
     this.chatLogText.setScrollFactor(0);
     this.chatLogText.setDepth(2500);
+    this.chatLogText.setAlpha(0.22);
+    this.chatLogText.setInteractive();
+    this.chatLogText.on("pointerdown", () => this.showChatLogClearly());
 
     this.chatInputBackground = this.add.rectangle(184, this.frontConf.height - 26, 336, 32, 0x0d1b24, 0.82);
     this.chatInputBackground.setStrokeStyle(1, 0x5fd0b5, 0.65);
@@ -707,6 +716,7 @@ export default class MainScene extends Phaser.Scene {
     if (!this.isChatEditing) {
       return;
     }
+    this.isChatEditing = false;
     const input = this.chatInputDom ? this.chatInputDom.node.querySelector("input") as HTMLInputElement : null;
     const message = input ? input.value.trim() : "";
     if (shouldSend && message.length > 0) {
@@ -719,16 +729,24 @@ export default class MainScene extends Phaser.Scene {
     this.chatInputText.setVisible(true);
     this.chatInputText.setText("Enter pour parler");
     this.chatInputText.setColor("#b7d8de");
-    this.isChatEditing = false;
   }
 
   receiveChatMessage(playerUuid: string, playerName: string, chatMessage: string) {
+    const messageKey = playerUuid + "|" + playerName + "|" + chatMessage;
+    const now = Date.now();
+    if (messageKey === this.lastChatMessageKey && now - this.lastChatMessageAt < 500) {
+      return;
+    }
+    this.lastChatMessageKey = messageKey;
+    this.lastChatMessageAt = now;
+
     const safeName = playerName || "Joueur";
     this.chatMessages.push(safeName + " : " + chatMessage);
     while (this.chatMessages.length > 8) {
       this.chatMessages.shift();
     }
     this.chatLogText.setText(this.chatMessages.join("\n"));
+    this.showChatLogClearly();
 
     if (playerUuid === this.player.uuid) {
       this.player.showChatBubble(chatMessage);
@@ -738,6 +756,17 @@ export default class MainScene extends Phaser.Scene {
     if (remotePlayer) {
       remotePlayer.showChatBubble(chatMessage);
     }
+  }
+
+  showChatLogClearly() {
+    this.chatLogText.setAlpha(1);
+    if (this.chatFadeTimer) {
+      this.chatFadeTimer.remove(false);
+    }
+    this.chatFadeTimer = this.time.delayedCall(5000, () => {
+      this.chatLogText.setAlpha(0.22);
+      this.chatFadeTimer = null;
+    });
   }
 
   canUsePauseMenu(): boolean {
