@@ -49,7 +49,7 @@ public class PlayerServiceTest {
 
         Player firstPlayer = player("player-1", 100, 100);
         Player closePlayer = player("player-2", 300, 100);
-        Player distantPlayer = player("player-3", 2200, 100);
+        Player distantPlayer = player("player-3", 4200, 100);
 
         gameService.createGame(gameId, "Game1");
         playerService.createPlayer(firstSocket, gameId, firstPlayer);

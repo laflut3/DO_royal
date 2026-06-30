@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 env:
-  BACKEND_CONTEXT: ./battle-royal-java-back-boilerplate
+  BACKEND_CONTEXT: ./battle-royal-back
   FRONTEND_CONTEXT: ./battle-royal-front
 
 jobs:

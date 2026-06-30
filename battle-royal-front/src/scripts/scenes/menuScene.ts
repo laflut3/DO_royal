@@ -1,7 +1,5 @@
 import { Physics } from "phaser";
 import FrontConf from "../conf";
-import { TextEdit, Edit } from 'phaser3-rex-plugins/plugins/textedit.js';
-
 
 import ListGamesWebSocket from "../network/listGameWebSocket"
 import {
@@ -39,6 +37,7 @@ export default class MenuScene extends Phaser.Scene {
     settingsPanel : Phaser.GameObjects.Container
     settingsRows : Map<string, Phaser.GameObjects.Text>
     waitingControl : keyof ControlSettings | null
+    activeTextInputDom : Phaser.GameObjects.DOMElement | null
 
     constructor() {
       super({ key: 'MenuScene' })
@@ -51,6 +50,7 @@ export default class MenuScene extends Phaser.Scene {
         this.controlSettings = loadControlSettings();
         this.settingsRows = new Map<string, Phaser.GameObjects.Text>();
         this.waitingControl = null;
+        this.activeTextInputDom = null;
         this.selectedSkinIndex = 0;
         this.animatedTiles = new Array<Phaser.GameObjects.TileSprite>();
         this.skinOptions = [
@@ -98,18 +98,7 @@ export default class MenuScene extends Phaser.Scene {
         this.pseudoText.setOrigin(0.5, 0.5);
         this.pseudoText.setColor("#f6fbff");
         this.pseudoText.setInteractive();
-        this.pseudoText.setInteractive().on('pointerdown', () => {
-            var editor = new TextEdit(this.pseudoText);
-            editor.open(
-            {
-                onOpen: function (textObject) {},
-                onTextChanged: function (textObject, text) {
-                    (textObject as Phaser.GameObjects.Text).text = text;
-                },
-                onClose: function (textObject) {},
-                selectAll: true,
-            });
-        });
+        this.pseudoText.on('pointerdown', () => this.openTextInput(this.pseudoText, "Enter pseudo"));
 
         /* Skin */
         let skinLabel = this.add.text(this.frontConf.width/2 - 150, this.frontConf.height/2 - 95, "Choose your character :");
@@ -205,18 +194,7 @@ export default class MenuScene extends Phaser.Scene {
         this.serverNameText.setOrigin(0.5, 0.5);
         this.serverNameText.setColor("#f6fbff");
         this.serverNameText.setInteractive();
-        this.serverNameText.setInteractive().on('pointerdown', () => {
-            var editor = new TextEdit(this.serverNameText);
-            editor.open(
-            {
-                onOpen: function (textObject) {},
-                onTextChanged: function (textObject, text) {
-                    (textObject as Phaser.GameObjects.Text).text = text;
-                },
-                onClose: function (textObject) {},
-                selectAll: true,
-            });
-        });
+        this.serverNameText.on('pointerdown', () => this.openTextInput(this.serverNameText, "Enter server name"));
 
         let buttonCreate = this.add.sprite(this.frontConf.width/2 + 300, this.frontConf.height/2+ 100, 'menuButton', 'button1');
         buttonCreate.setInteractive();
@@ -328,6 +306,51 @@ export default class MenuScene extends Phaser.Scene {
 
     currentSkinAtlas() : string {
         return this.skinOptions[this.selectedSkinIndex].atlas;
+    }
+
+    openTextInput(textObject: Phaser.GameObjects.Text, placeholder: string) {
+        if (this.activeTextInputDom !== null) {
+            this.closeActiveTextInput(true);
+        }
+        const currentText = textObject.text === placeholder ? "" : textObject.text;
+        textObject.setVisible(false);
+        this.activeTextInputDom = this.add.dom(textObject.x, textObject.y).createFromHTML(
+            '<input maxlength="24" style="width:210px;height:26px;padding:0 8px;border:0;outline:0;background:#0d1b24;color:#f6fbff;text-align:center;font:18px monospace;" />'
+        );
+        this.activeTextInputDom.setDepth(3000);
+        const input = this.activeTextInputDom.node.querySelector("input") as HTMLInputElement;
+        input.value = currentText;
+        input.focus();
+        input.select();
+
+        input.addEventListener("keydown", (event: KeyboardEvent) => {
+            event.stopPropagation();
+            if (event.key === "Enter") {
+                event.preventDefault();
+                this.closeActiveTextInput(true);
+            } else if (event.key === "Escape") {
+                event.preventDefault();
+                this.closeActiveTextInput(false);
+            }
+        });
+        input.addEventListener("blur", () => this.closeActiveTextInput(true));
+        this.activeTextInputDom.setData("targetText", textObject);
+    }
+
+    closeActiveTextInput(shouldApply: boolean) {
+        if (this.activeTextInputDom === null) {
+            return;
+        }
+        const input = this.activeTextInputDom.node.querySelector("input") as HTMLInputElement;
+        const textObject = this.activeTextInputDom.getData("targetText") as Phaser.GameObjects.Text;
+        const value = input.value.trim();
+        if (shouldApply && value.length > 0) {
+            textObject.setText(value);
+            textObject.setColor("#f6fbff");
+        }
+        textObject.setVisible(true);
+        this.activeTextInputDom.destroy();
+        this.activeTextInputDom = null;
     }
 
     createSettingsPanel() {

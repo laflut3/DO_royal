@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PlayerService implements IPlayerService {
     private static final double TILE_SIZE = 32.0;
-    private static final double PLAYER_VISIBILITY_TILE_RANGE = 50.0;
+    private static final double PLAYER_VISIBILITY_TILE_RANGE = 100.0;
     private static final double PLAYER_VISIBILITY_RANGE = TILE_SIZE * PLAYER_VISIBILITY_TILE_RANGE;
 
     private final GameService gameService;

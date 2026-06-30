@@ -391,7 +391,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (spawnPoints.length === 0) {
             return new Phaser.Math.Vector2(this.lobbyPoint.x, this.lobbyPoint.y);
         }
-        const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
+        const nearbySpawnPoints = spawnPoints.slice(0, Math.min(5, spawnPoints.length));
+        const spawnPoint = Phaser.Utils.Array.GetRandom(nearbySpawnPoints);
         return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
     }
 }

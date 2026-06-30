@@ -16,7 +16,7 @@ Clone the repository and fetch dependencies:
 
 ```sh
 git clone <repository-url>
-cd battle-royal-java-back-boilerplate
+cd battle-royal-back
 mvn dependency:resolve
 ```
 
