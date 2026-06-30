@@ -70,7 +70,12 @@ export default class MenuScene extends Phaser.Scene {
             { name: "Nova", atlas: "nova", description: "Stellar duelist" },
             { name: "Ember", atlas: "ember", description: "Volcanic striker" },
             { name: "Cipher", atlas: "cipher", description: "Neon hacker" },
-            { name: "Oni", atlas: "oni", description: "Moonlit yokai" }
+            { name: "Oni", atlas: "oni", description: "Moonlit yokai" },
+            { name: "Mbappe", atlas: "mbappe", description: "Explosive striker" },
+            { name: "Oudindindoun", atlas: "oudindindoun-madindindoun", description: "Chaotic contender" },
+            { name: "Six Seven", atlas: "six-seven", description: "Unpredictable runner" },
+            { name: "Tralalelo", atlas: "tralalelo-tralala", description: "Fast arena oddity" },
+            { name: "Tung Sahur", atlas: "tung-tung-tung-sahur", description: "Night watch fighter" }
         ];
         // Fill the back ground with texture
         for(let w = 0; w <= this.frontConf.width; w+= 512 ) {
