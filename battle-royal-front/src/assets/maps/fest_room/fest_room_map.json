@@ -40047,7 +40047,7 @@
           "y": 264
         },
         {
-          "id": 46,
+          "id": 139,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40055,11 +40055,10 @@
           "width": 0,
           "height": 0,
           "x": 1072,
-          "y": 1232,
-          "point": true
+          "y": 1232
         },
         {
-          "id": 47,
+          "id": 140,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40067,11 +40066,10 @@
           "width": 0,
           "height": 0,
           "x": 1616,
-          "y": 1424,
-          "point": true
+          "y": 1424
         },
         {
-          "id": 48,
+          "id": 141,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40079,11 +40077,10 @@
           "width": 0,
           "height": 0,
           "x": 2160,
-          "y": 1232,
-          "point": true
+          "y": 1232
         },
         {
-          "id": 49,
+          "id": 142,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40091,11 +40088,10 @@
           "width": 0,
           "height": 0,
           "x": 496,
-          "y": 1424,
-          "point": true
+          "y": 1424
         },
         {
-          "id": 50,
+          "id": 143,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40103,11 +40099,10 @@
           "width": 0,
           "height": 0,
           "x": 2704,
-          "y": 1424,
-          "point": true
+          "y": 1424
         },
         {
-          "id": 51,
+          "id": 144,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40115,11 +40110,10 @@
           "width": 0,
           "height": 0,
           "x": 1296,
-          "y": 2416,
-          "point": true
+          "y": 2416
         },
         {
-          "id": 52,
+          "id": 145,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40127,11 +40121,10 @@
           "width": 0,
           "height": 0,
           "x": 1648,
-          "y": 2416,
-          "point": true
+          "y": 2416
         },
         {
-          "id": 53,
+          "id": 146,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40139,11 +40132,10 @@
           "width": 0,
           "height": 0,
           "x": 528,
-          "y": 2576,
-          "point": true
+          "y": 2576
         },
         {
-          "id": 54,
+          "id": 147,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40151,11 +40143,10 @@
           "width": 0,
           "height": 0,
           "x": 2416,
-          "y": 2576,
-          "point": true
+          "y": 2576
         },
         {
-          "id": 55,
+          "id": 148,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40163,11 +40154,10 @@
           "width": 0,
           "height": 0,
           "x": 2704,
-          "y": 2320,
-          "point": true
+          "y": 2320
         },
         {
-          "id": 56,
+          "id": 149,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40175,11 +40165,10 @@
           "width": 0,
           "height": 0,
           "x": 912,
-          "y": 3696,
-          "point": true
+          "y": 3696
         },
         {
-          "id": 57,
+          "id": 150,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40187,11 +40176,10 @@
           "width": 0,
           "height": 0,
           "x": 1232,
-          "y": 3600,
-          "point": true
+          "y": 3600
         },
         {
-          "id": 58,
+          "id": 151,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40199,11 +40187,10 @@
           "width": 0,
           "height": 0,
           "x": 1872,
-          "y": 3696,
-          "point": true
+          "y": 3696
         },
         {
-          "id": 59,
+          "id": 152,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40211,11 +40198,10 @@
           "width": 0,
           "height": 0,
           "x": 2512,
-          "y": 3632,
-          "point": true
+          "y": 3632
         },
         {
-          "id": 60,
+          "id": 153,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40223,11 +40209,10 @@
           "width": 0,
           "height": 0,
           "x": 976,
-          "y": 4784,
-          "point": true
+          "y": 4784
         },
         {
-          "id": 61,
+          "id": 154,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40235,11 +40220,10 @@
           "width": 0,
           "height": 0,
           "x": 2256,
-          "y": 4784,
-          "point": true
+          "y": 4784
         },
         {
-          "id": 62,
+          "id": 155,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40247,11 +40231,10 @@
           "width": 0,
           "height": 0,
           "x": 1456,
-          "y": 5072,
-          "point": true
+          "y": 5072
         },
         {
-          "id": 63,
+          "id": 156,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40259,11 +40242,10 @@
           "width": 0,
           "height": 0,
           "x": 1808,
-          "y": 5072,
-          "point": true
+          "y": 5072
         },
         {
-          "id": 64,
+          "id": 157,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40271,11 +40253,10 @@
           "width": 0,
           "height": 0,
           "x": 976,
-          "y": 5264,
-          "point": true
+          "y": 5264
         },
         {
-          "id": 65,
+          "id": 158,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40283,11 +40264,10 @@
           "width": 0,
           "height": 0,
           "x": 2320,
-          "y": 5264,
-          "point": true
+          "y": 5264
         },
         {
-          "id": 66,
+          "id": 159,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40295,11 +40275,10 @@
           "width": 0,
           "height": 0,
           "x": 1616,
-          "y": 2224,
-          "point": true
+          "y": 2224
         },
         {
-          "id": 67,
+          "id": 160,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40307,11 +40286,10 @@
           "width": 0,
           "height": 0,
           "x": 688,
-          "y": 2192,
-          "point": true
+          "y": 2192
         },
         {
-          "id": 68,
+          "id": 161,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40319,11 +40297,10 @@
           "width": 0,
           "height": 0,
           "x": 2096,
-          "y": 2192,
-          "point": true
+          "y": 2192
         },
         {
-          "id": 69,
+          "id": 162,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40331,8 +40308,18 @@
           "width": 0,
           "height": 0,
           "x": 2672,
-          "y": 3312,
-          "point": true
+          "y": 3312
+        },
+        {
+          "id": 163,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1600,
+          "y": 6048
         },
         {
           "id": 70,
@@ -61115,7 +61102,7 @@
     }
   ],
   "nextlayerid": 5,
-  "nextobjectid": 139,
+  "nextobjectid": 164,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.7.1",

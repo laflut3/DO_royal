@@ -24,9 +24,12 @@ public class WebSocketMessage {
     private UUID socketUuid;
     private UUID gameId;
     private String gameName;
+    private String mapId;
+    private String mapName;
     private GameStatus gameStatus;
     private String winnerName;
     private String ownerPlayerUuid;
+    private List<String> playerUuids;
     private String status;
     private String errorMessage;
     private Player player;
@@ -37,13 +40,14 @@ public class WebSocketMessage {
     private String playerUuid;
     private String playerName;
 
-    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<Player> players) {
+    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<String> playerUuids, List<Player> players) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType(MessageType.GAME_STATE);
         message.setGameId(gameId);
         message.setGameStatus(gameStatus);
         message.setWinnerName(winnerName == null ? "" : winnerName);
         message.setOwnerPlayerUuid(ownerPlayerUuid);
+        message.setPlayerUuids(playerUuids);
         message.setPlayers(players);
         return message;
     }

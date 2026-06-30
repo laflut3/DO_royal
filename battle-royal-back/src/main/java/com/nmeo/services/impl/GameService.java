@@ -18,10 +18,16 @@ public class GameService {
     private final Map<UUID, GameSession> sessions = new ConcurrentHashMap<>();
 
     public void createGame(UUID gameId, String gameName) {
+        createGame(gameId, gameName, Game.DEFAULT_MAP_ID, Game.DEFAULT_MAP_NAME);
+    }
+
+    public void createGame(UUID gameId, String gameName, String mapId, String mapName) {
         if (gameId == null || gameName == null || gameName.isBlank()) {
             throw new IllegalArgumentException("gameId and gameName are required");
         }
-        GameSession session = new GameSession(new Game(gameId, gameName));
+        String normalizedMapId = mapId == null || mapId.isBlank() ? Game.DEFAULT_MAP_ID : mapId.strip();
+        String normalizedMapName = mapName == null || mapName.isBlank() ? Game.DEFAULT_MAP_NAME : mapName.strip();
+        GameSession session = new GameSession(new Game(gameId, gameName, normalizedMapId, normalizedMapName));
         if (sessions.putIfAbsent(gameId, session) != null) {
             throw new IllegalArgumentException("A game with the same uuid already exists.");
         }
@@ -58,6 +64,12 @@ public class GameService {
         return getSession(gameId)
                 .map(GameSession::getOwnerPlayerUuid)
                 .orElse(null);
+    }
+
+    public List<String> getPlayerUuids(UUID gameId) {
+        return getSession(gameId)
+                .map(session -> session.getPlayers().keySet().stream().sorted().toList())
+                .orElse(List.of());
     }
 
     public void assignOwnerIfMissing(UUID gameId, String playerUuid) {

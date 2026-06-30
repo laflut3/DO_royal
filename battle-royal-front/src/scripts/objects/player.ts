@@ -186,8 +186,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.updateHud();
     }
 
-    goToSpawnPoint() {
-        this.reviveAtSpawn();
+    goToSpawnPoint(spawnIndex?: number, playerCount?: number) {
+        this.reviveAtSpawn(spawnIndex, playerCount);
     }
 
     goToLobbyPoint() {
@@ -223,8 +223,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.updateHud();
     }
 
-    reviveAtSpawn() {
-        this.spawnPoint = this.pickSpawnPoint(this.spawnPoints);
+    reviveAtSpawn(spawnIndex?: number, playerCount?: number) {
+        this.spawnPoint = this.pickSpawnPoint(this.spawnPoints, spawnIndex, playerCount);
         this.setPosition(this.spawnPoint.x, this.spawnPoint.y);
         this.health = this.maxHealth;
         this.shield = 0;
@@ -387,12 +387,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.staminaBarFill.width = 40 * staminaRatio;
     }
 
-    private pickSpawnPoint(spawnPoints: Array<Phaser.Math.Vector2>): Phaser.Math.Vector2 {
+    private pickSpawnPoint(spawnPoints: Array<Phaser.Math.Vector2>, spawnIndex?: number, playerCount?: number): Phaser.Math.Vector2 {
         if (spawnPoints.length === 0) {
             return new Phaser.Math.Vector2(this.lobbyPoint.x, this.lobbyPoint.y);
         }
-        const nearbySpawnPoints = spawnPoints.slice(0, Math.min(5, spawnPoints.length));
-        const spawnPoint = Phaser.Utils.Array.GetRandom(nearbySpawnPoints);
+        if (spawnIndex !== undefined && playerCount !== undefined && spawnIndex >= 0 && playerCount > 0) {
+            const clampedPlayerCount = Math.min(playerCount, spawnPoints.length);
+            const spawnSlot = Math.min(
+                spawnPoints.length - 1,
+                Math.floor(spawnIndex * spawnPoints.length / clampedPlayerCount)
+            );
+            const spawnPoint = spawnPoints[spawnSlot];
+            return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
+        }
+        const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
         return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
     }
 }

@@ -1,3 +1,5 @@
+import { MAP_CATALOG } from "../gameCore/mapCatalog"
+
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super({ key: 'PreloadScene' })
@@ -19,7 +21,9 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('indoor1', 'assets/maps/fest_room/indoor1.png');
     this.load.image('indoor2', 'assets/maps/fest_room/indoor2.png');
     this.load.image('indoor3', 'assets/maps/fest_room/indoor3.png');
-    this.load.tilemapTiledJSON('map_fest_room', 'assets/maps/fest_room/fest_room_map.json');
+    MAP_CATALOG.forEach((mapDefinition) => {
+      this.load.tilemapTiledJSON(mapDefinition.mapKey, mapDefinition.path);
+    });
     this.load.atlas('fest_room_prop_atlas', 'assets/maps/fest_room/fest_room_prop.png', 'assets/maps/fest_room/fest_room_prop.json');
     this.load.atlas('room_prop_atlas', 'assets/maps/fest_room/room_prop.png', 'assets/maps/fest_room/room_prop.json');
 
