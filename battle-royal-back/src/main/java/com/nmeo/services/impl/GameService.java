@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.nmeo.models.Bullet;
 import com.nmeo.models.Game;
@@ -53,6 +54,36 @@ public class GameService {
                 .orElse("");
     }
 
+    public String getOwnerPlayerUuid(UUID gameId) {
+        return getSession(gameId)
+                .map(GameSession::getOwnerPlayerUuid)
+                .orElse(null);
+    }
+
+    public void assignOwnerIfMissing(UUID gameId, String playerUuid) {
+        GameSession session = sessionOrThrow(gameId);
+        if (session.getOwnerPlayerUuid() == null && playerUuid != null && session.getPlayers().containsKey(playerUuid)) {
+            session.setOwnerPlayerUuid(playerUuid);
+        }
+    }
+
+    public void transferOwnerIfNeeded(UUID gameId, String removedPlayerUuid) {
+        GameSession session = sessionOrThrow(gameId);
+        if (removedPlayerUuid == null || !removedPlayerUuid.equals(session.getOwnerPlayerUuid())) {
+            return;
+        }
+        List<String> connectedPlayerUuids = session.getPlayers().keySet().stream().toList();
+        if (connectedPlayerUuids.isEmpty()) {
+            session.setOwnerPlayerUuid(null);
+            return;
+        }
+        session.setOwnerPlayerUuid(connectedPlayerUuids.get(ThreadLocalRandom.current().nextInt(connectedPlayerUuids.size())));
+    }
+
+    public boolean isOwner(UUID gameId, String playerUuid) {
+        return playerUuid != null && playerUuid.equals(getOwnerPlayerUuid(gameId));
+    }
+
     public void updateGameStatus(UUID gameId, GameStatus status) {
         GameSession session = sessionOrThrow(gameId);
         session.setStatus(status);
@@ -70,6 +101,15 @@ public class GameService {
                 player.setShield(0);
             });
         }
+    }
+
+    public Player getPlayer(UUID gameId, String playerUuid) {
+        if (playerUuid == null) {
+            return null;
+        }
+        return getSession(gameId)
+                .map(session -> session.getPlayers().get(playerUuid))
+                .orElse(null);
     }
 
     public void addBullet(UUID gameId, Bullet bullet) {

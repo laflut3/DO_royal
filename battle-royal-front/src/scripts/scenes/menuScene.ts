@@ -1,7 +1,5 @@
 import { Physics } from "phaser";
 import FrontConf from "../conf";
-import { TextEdit, Edit } from 'phaser3-rex-plugins/plugins/textedit.js';
-
 
 import ListGamesWebSocket from "../network/listGameWebSocket"
 import {
@@ -23,6 +21,7 @@ interface SkinOption {
 export default class MenuScene extends Phaser.Scene {
     serverList : Map<string, string>
     graphicServerList : Array<Phaser.GameObjects.Text>
+    graphicServerRows : Array<Phaser.GameObjects.Rectangle>
     selectedServer : string | undefined
     webSocket : ListGamesWebSocket
     frontConf : FrontConf
@@ -39,6 +38,7 @@ export default class MenuScene extends Phaser.Scene {
     settingsPanel : Phaser.GameObjects.Container
     settingsRows : Map<string, Phaser.GameObjects.Text>
     waitingControl : keyof ControlSettings | null
+    activeTextInputDom : Phaser.GameObjects.DOMElement | null
 
     constructor() {
       super({ key: 'MenuScene' })
@@ -51,6 +51,7 @@ export default class MenuScene extends Phaser.Scene {
         this.controlSettings = loadControlSettings();
         this.settingsRows = new Map<string, Phaser.GameObjects.Text>();
         this.waitingControl = null;
+        this.activeTextInputDom = null;
         this.selectedSkinIndex = 0;
         this.animatedTiles = new Array<Phaser.GameObjects.TileSprite>();
         this.skinOptions = [
@@ -98,18 +99,7 @@ export default class MenuScene extends Phaser.Scene {
         this.pseudoText.setOrigin(0.5, 0.5);
         this.pseudoText.setColor("#f6fbff");
         this.pseudoText.setInteractive();
-        this.pseudoText.setInteractive().on('pointerdown', () => {
-            var editor = new TextEdit(this.pseudoText);
-            editor.open(
-            {
-                onOpen: function (textObject) {},
-                onTextChanged: function (textObject, text) {
-                    (textObject as Phaser.GameObjects.Text).text = text;
-                },
-                onClose: function (textObject) {},
-                selectAll: true,
-            });
-        });
+        this.pseudoText.on('pointerdown', () => this.openTextInput(this.pseudoText, "Enter pseudo"));
 
         /* Skin */
         let skinLabel = this.add.text(this.frontConf.width/2 - 150, this.frontConf.height/2 - 95, "Choose your character :");
@@ -191,6 +181,7 @@ export default class MenuScene extends Phaser.Scene {
 
         this.serverList = new Map<string, string>();
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
+        this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
 
         /* Create Section */
         this.add.rectangle(this.frontConf.width/2 + 300, this.frontConf.height/2 + 85, 390, 210, 0x0d1b24, 0.86).setStrokeStyle(2, 0xf4d35e, 0.45);
@@ -205,18 +196,7 @@ export default class MenuScene extends Phaser.Scene {
         this.serverNameText.setOrigin(0.5, 0.5);
         this.serverNameText.setColor("#f6fbff");
         this.serverNameText.setInteractive();
-        this.serverNameText.setInteractive().on('pointerdown', () => {
-            var editor = new TextEdit(this.serverNameText);
-            editor.open(
-            {
-                onOpen: function (textObject) {},
-                onTextChanged: function (textObject, text) {
-                    (textObject as Phaser.GameObjects.Text).text = text;
-                },
-                onClose: function (textObject) {},
-                selectAll: true,
-            });
-        });
+        this.serverNameText.on('pointerdown', () => this.openTextInput(this.serverNameText, "Enter server name"));
 
         let buttonCreate = this.add.sprite(this.frontConf.width/2 + 300, this.frontConf.height/2+ 100, 'menuButton', 'button1');
         buttonCreate.setInteractive();
@@ -271,10 +251,14 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     goToMainScene(data : object) {
+        if (this.webSocket) {
+            this.webSocket.disconnect();
+        }
         this.scene.start('MainScene',  data);
     }
 
     createGame() {
+        this.closeActiveTextInput(true);
         if(this.pseudoText.text === null || this.pseudoText.text === "Enter pseudo") {
             this.pseudoText.setColor("red");
             return;
@@ -300,6 +284,7 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     joinServer() {
+        this.closeActiveTextInput(true);
         if(this.pseudoText.text === null || this.pseudoText.text === "Enter pseudo") {
             this.pseudoText.setColor("red");
             return;
@@ -328,6 +313,51 @@ export default class MenuScene extends Phaser.Scene {
 
     currentSkinAtlas() : string {
         return this.skinOptions[this.selectedSkinIndex].atlas;
+    }
+
+    openTextInput(textObject: Phaser.GameObjects.Text, placeholder: string) {
+        if (this.activeTextInputDom !== null) {
+            this.closeActiveTextInput(true);
+        }
+        const currentText = textObject.text === placeholder ? "" : textObject.text;
+        textObject.setVisible(false);
+        this.activeTextInputDom = this.add.dom(textObject.x, textObject.y).createFromHTML(
+            '<input maxlength="24" style="width:210px;height:26px;padding:0 8px;border:0;outline:0;background:#0d1b24;color:#f6fbff;text-align:center;font:18px monospace;" />'
+        );
+        this.activeTextInputDom.setDepth(3000);
+        const input = this.activeTextInputDom.node.querySelector("input") as HTMLInputElement;
+        input.value = currentText;
+        input.focus();
+        input.select();
+
+        input.addEventListener("keydown", (event: KeyboardEvent) => {
+            event.stopPropagation();
+            if (event.key === "Enter") {
+                event.preventDefault();
+                this.closeActiveTextInput(true);
+            } else if (event.key === "Escape") {
+                event.preventDefault();
+                this.closeActiveTextInput(false);
+            }
+        });
+        input.addEventListener("blur", () => this.closeActiveTextInput(true));
+        this.activeTextInputDom.setData("targetText", textObject);
+    }
+
+    closeActiveTextInput(shouldApply: boolean) {
+        if (this.activeTextInputDom === null) {
+            return;
+        }
+        const input = this.activeTextInputDom.node.querySelector("input") as HTMLInputElement;
+        const textObject = this.activeTextInputDom.getData("targetText") as Phaser.GameObjects.Text;
+        const value = input.value.trim();
+        if (shouldApply && value.length > 0) {
+            textObject.setText(value);
+            textObject.setColor("#f6fbff");
+        }
+        textObject.setVisible(true);
+        this.activeTextInputDom.destroy();
+        this.activeTextInputDom = null;
     }
 
     createSettingsPanel() {
@@ -458,19 +488,36 @@ export default class MenuScene extends Phaser.Scene {
 
     loadServerList(serverList : Map<string, string>) {
         this.graphicServerList.forEach( (textElement : Phaser.GameObjects.Text) => { textElement.destroy()});
+        this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.destroy()});
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
+        this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
         this.serverList = serverList;
+        this.selectedServer = undefined;
+        this.textJoin.setColor("#f6fbff");
         let i = 15;
         this.serverList.forEach( ( value : string, key : string) => {
-            let textServer = this.add.text(this.frontConf.width/2 - 300, this.frontConf.height/2 + 35 + i , key);
+            const rowY = this.frontConf.height/2 + 35 + i;
+            let rowServer = this.add.rectangle(this.frontConf.width/2 - 300, rowY, 330, 26, 0x122b36, 0.01);
+            rowServer.setInteractive({ useHandCursor: true });
+            let textServer = this.add.text(this.frontConf.width/2 - 300, rowY , key);
             textServer.setOrigin(0.5, 0.5);
-            textServer.setInteractive();
+            textServer.setInteractive({ useHandCursor: true });
 
-            textServer.on('clicked', (button : Physics.Arcade.Sprite) => {
+            const selectServer = () => {
                 this.graphicServerList.forEach( (textElement : Phaser.GameObjects.Text) => { textElement.setColor("white");});
+                this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.setFillStyle(0x122b36, 0.01);});
                 textServer.setColor("red");
-                this.selectedServer = this.serverList.get(textServer.text);
-            });
+                rowServer.setFillStyle(0x244c5a, 0.75);
+                this.selectedServer = value;
+                this.textJoin.setColor("#f6fbff");
+            };
+            textServer.on('clicked', selectServer);
+            rowServer.on('clicked', selectServer);
+            textServer.on('pointerdown', selectServer);
+            rowServer.on('pointerdown', selectServer);
+            textServer.on('pointerup', () => this.joinServer());
+            rowServer.on('pointerup', () => this.joinServer());
+            this.graphicServerRows.push(rowServer);
             this.graphicServerList.push(textServer);
             i += this.frontConf.height/30;
         });

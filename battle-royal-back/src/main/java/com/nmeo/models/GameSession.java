@@ -19,6 +19,9 @@ public class GameSession {
     @Setter
     private String winnerName = "";
 
+    @Setter
+    private String ownerPlayerUuid;
+
     public GameSession(Game game) {
         this.game = game;
     }

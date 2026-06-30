@@ -26,19 +26,24 @@ public class WebSocketMessage {
     private String gameName;
     private GameStatus gameStatus;
     private String winnerName;
+    private String ownerPlayerUuid;
     private String status;
     private String errorMessage;
     private Player player;
     private List<Player> players;
     private Bullet bullet;
     private List<Game> gamelist;
+    private String chatMessage;
+    private String playerUuid;
+    private String playerName;
 
-    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, List<Player> players) {
+    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<Player> players) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType(MessageType.GAME_STATE);
         message.setGameId(gameId);
         message.setGameStatus(gameStatus);
         message.setWinnerName(winnerName == null ? "" : winnerName);
+        message.setOwnerPlayerUuid(ownerPlayerUuid);
         message.setPlayers(players);
         return message;
     }
@@ -55,6 +60,16 @@ public class WebSocketMessage {
         message.setType(type);
         message.setGameId(gameId);
         message.setBullet(bullet);
+        return message;
+    }
+
+    public static WebSocketMessage chatMessage(UUID gameId, String playerUuid, String playerName, String chatMessage) {
+        WebSocketMessage message = new WebSocketMessage();
+        message.setType(MessageType.CHAT_MESSAGE);
+        message.setGameId(gameId);
+        message.setPlayerUuid(playerUuid);
+        message.setPlayerName(playerName);
+        message.setChatMessage(chatMessage);
         return message;
     }
 

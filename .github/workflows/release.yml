@@ -18,7 +18,7 @@ env:
   CONTAINER_REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: laflut3/do-royal-backend
   FRONTEND_IMAGE_NAME: laflut3/do-royal-frontend
-  BACKEND_CONTEXT: ./battle-royal-java-back-boilerplate
+  BACKEND_CONTEXT: ./battle-royal-back
   FRONTEND_CONTEXT: ./battle-royal-front
 
 jobs:

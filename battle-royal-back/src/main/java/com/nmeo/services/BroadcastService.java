@@ -71,9 +71,22 @@ public class BroadcastService {
                     gameId,
                     gameService.getGameStatus(gameId),
                     gameService.getWinnerName(gameId),
+                    gameService.getOwnerPlayerUuid(gameId),
                     playerService.getPlayersVisibleBy(gameId, socketUuid));
             ctx.send(message);
         });
+    }
+
+    public void broadcastMessageInGame(UUID gameId, WebSocketMessage message) {
+        Set<UUID> sockets = socketsByGame.get(gameId);
+        if (sockets == null) {
+            return;
+        }
+
+        sockets.stream()
+                .map(sessionsBySocket::get)
+                .filter(ctx -> ctx != null)
+                .forEach(ctx -> ctx.send(message));
     }
 
     public void broadcastMessageInGameExcept(UUID gameId, UUID excludedSocketUuid, WebSocketMessage message) {
@@ -84,6 +97,26 @@ public class BroadcastService {
 
         sockets.stream()
                 .filter(socketUuid -> !socketUuid.equals(excludedSocketUuid))
+                .map(sessionsBySocket::get)
+                .filter(ctx -> ctx != null)
+                .forEach(ctx -> ctx.send(message));
+    }
+
+    public void broadcastMessageNearPointInGameExcept(
+            UUID gameId,
+            UUID excludedSocketUuid,
+            double x,
+            double y,
+            WebSocketMessage message,
+            IPlayerService playerService) {
+        Set<UUID> sockets = socketsByGame.get(gameId);
+        if (sockets == null) {
+            return;
+        }
+
+        sockets.stream()
+                .filter(socketUuid -> !socketUuid.equals(excludedSocketUuid))
+                .filter(socketUuid -> playerService.canSocketSeePoint(gameId, socketUuid, x, y))
                 .map(sessionsBySocket::get)
                 .filter(ctx -> ctx != null)
                 .forEach(ctx -> ctx.send(message));

@@ -69,6 +69,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     healthBarFill : Phaser.GameObjects.Rectangle
     staminaBarBackground : Phaser.GameObjects.Rectangle
     staminaBarFill : Phaser.GameObjects.Rectangle
+    chatBubbleText : Phaser.GameObjects.Text | null
+    chatBubbleTimer : Phaser.Time.TimerEvent | null
     spawnPoints : Array<Phaser.Math.Vector2>
 
     constructor(scene : Phaser.Scene, lobbyPoint : Phaser.Math.Vector2 , playerAtlas : string, frame: string, uuid : string, name : string, skinTint: number = 0xffffff, spawnPoints: Array<Phaser.Math.Vector2> = []) {
@@ -134,6 +136,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.staminaBarFill = scene.add.rectangle(this.x - 20, this.y - 26, 40, 3, 0xf1c40f, 1);
         this.staminaBarFill.setOrigin(0, 0.5);
         this.staminaBarFill.setDepth(31);
+        this.chatBubbleText = null;
+        this.chatBubbleTimer = null;
         this.updateHud();
     }
 
@@ -295,6 +299,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.healthBarFill.setVisible(value);
             this.staminaBarBackground.setVisible(value);
             this.staminaBarFill.setVisible(value);
+            if (this.chatBubbleText) {
+                this.chatBubbleText.setVisible(value);
+            }
         }
         return this;
     }
@@ -309,7 +316,40 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.staminaBarBackground.destroy();
             this.staminaBarFill.destroy();
         }
+        if (this.chatBubbleTimer) {
+            this.chatBubbleTimer.remove(false);
+        }
+        if (this.chatBubbleText) {
+            this.chatBubbleText.destroy();
+        }
         super.destroy();
+    }
+
+    showChatBubble(message: string) {
+        if (this.chatBubbleTimer) {
+            this.chatBubbleTimer.remove(false);
+            this.chatBubbleTimer = null;
+        }
+        if (this.chatBubbleText) {
+            this.chatBubbleText.destroy();
+        }
+        this.chatBubbleText = this.scene.add.text(this.x, this.y - 82, message, {
+            fontSize: "13px",
+            color: "#0b141c",
+            backgroundColor: "#ffffff",
+            wordWrap: { width: 180, useAdvancedWrap: true }
+        });
+        this.chatBubbleText.setPadding(8, 5, 8, 5);
+        this.chatBubbleText.setOrigin(0.5, 1);
+        this.chatBubbleText.setDepth(80);
+        this.chatBubbleText.setVisible(this.visible);
+        this.chatBubbleTimer = this.scene.time.delayedCall(2000, () => {
+            if (this.chatBubbleText) {
+                this.chatBubbleText.destroy();
+                this.chatBubbleText = null;
+            }
+            this.chatBubbleTimer = null;
+        });
     }
 
     public updateHud() {
@@ -324,6 +364,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.healthBarFill.setPosition(this.x - 20, this.y - 34);
         this.staminaBarBackground.setPosition(this.x, this.y - 26);
         this.staminaBarFill.setPosition(this.x - 20, this.y - 26);
+        if (this.chatBubbleText) {
+            this.chatBubbleText.setPosition(this.x, this.y - 82);
+        }
 
         const shieldRatio = Phaser.Math.Clamp(this.shield / this.maxShield, 0, 1);
         this.shieldBarFill.width = 40 * shieldRatio;
@@ -348,7 +391,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (spawnPoints.length === 0) {
             return new Phaser.Math.Vector2(this.lobbyPoint.x, this.lobbyPoint.y);
         }
-        const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
+        const nearbySpawnPoints = spawnPoints.slice(0, Math.min(5, spawnPoints.length));
+        const spawnPoint = Phaser.Utils.Array.GetRandom(nearbySpawnPoints);
         return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
     }
 }

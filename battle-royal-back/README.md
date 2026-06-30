@@ -1,6 +1,6 @@
-# Battle Royal Java Back Boilerplate
+# Battle Royal Back
 
-A minimal Java/Maven boilerplate for a Battle Royale game backend. It exposes a
+A Java/Maven for a Battle Royale game backend. It exposes a
 WebSocket endpoint (`/game`) built on [Javalin](https://javalin.io/) and uses
 Log4j2 for logging.
 
@@ -16,7 +16,7 @@ Clone the repository and fetch dependencies:
 
 ```sh
 git clone <repository-url>
-cd battle-royal-java-back-boilerplate
+cd battle-royal-back
 mvn dependency:resolve
 ```
 

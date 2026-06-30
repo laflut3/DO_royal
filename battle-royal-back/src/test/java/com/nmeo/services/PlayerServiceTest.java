@@ -39,14 +39,58 @@ public class PlayerServiceTest {
     }
 
     @Test
+    public void shouldNotReturnDistantPlayersDuringGame() {
+        GameService gameService = new GameService();
+        PlayerService playerService = new PlayerService(gameService);
+        UUID gameId = UUID.randomUUID();
+        UUID firstSocket = UUID.randomUUID();
+        UUID closeSocket = UUID.randomUUID();
+        UUID distantSocket = UUID.randomUUID();
+
+        Player firstPlayer = player("player-1", 100, 100);
+        Player closePlayer = player("player-2", 300, 100);
+        Player distantPlayer = player("player-3", 4200, 100);
+
+        gameService.createGame(gameId, "Game1");
+        playerService.createPlayer(firstSocket, gameId, firstPlayer);
+        playerService.createPlayer(closeSocket, gameId, closePlayer);
+        playerService.createPlayer(distantSocket, gameId, distantPlayer);
+        gameService.updateGameStatus(gameId, GameStatus.PLAYING);
+
+        List<Player> visiblePlayers = playerService.getPlayersVisibleBy(gameId, firstSocket);
+
+        assertEquals(1, visiblePlayers.size());
+        assertEquals("player-2", visiblePlayers.get(0).getUuid());
+    }
+
+    @Test
+    public void shouldKeepAllOtherPlayersVisibleInLobby() {
+        GameService gameService = new GameService();
+        PlayerService playerService = new PlayerService(gameService);
+        UUID gameId = UUID.randomUUID();
+        UUID firstSocket = UUID.randomUUID();
+        UUID distantSocket = UUID.randomUUID();
+
+        gameService.createGame(gameId, "Game1");
+        playerService.createPlayer(firstSocket, gameId, player("player-1", 100, 100));
+        playerService.createPlayer(distantSocket, gameId, player("player-2", 1200, 100));
+
+        List<Player> visiblePlayers = playerService.getPlayersVisibleBy(gameId, firstSocket);
+
+        assertEquals(1, visiblePlayers.size());
+        assertEquals("player-2", visiblePlayers.get(0).getUuid());
+    }
+
+    @Test
     public void shouldSerializeMessageTypeAsFrontEndNumber() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", List.of());
+        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of());
 
         JsonNode json = mapper.readTree(mapper.writeValueAsString(message));
 
         assertEquals(3, json.get("type").asInt());
         assertTrue(json.has("players"));
+        assertEquals("player-1", json.get("ownerPlayerUuid").asText());
     }
 
     @Test
@@ -59,9 +103,15 @@ public class PlayerServiceTest {
     }
 
     private Player player(String uuid) {
+        return player(uuid, 0, 0);
+    }
+
+    private Player player(String uuid, double x, double y) {
         Player player = new Player();
         player.setUuid(uuid);
         player.setName(uuid);
+        player.setX(x);
+        player.setY(y);
         player.setAtlas("misa");
         player.setFrame("misa-back");
         player.setIsAlive(true);

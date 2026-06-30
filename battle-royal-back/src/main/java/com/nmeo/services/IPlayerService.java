@@ -12,5 +12,9 @@ public interface IPlayerService {
 
     public UUID removePlayer(UUID socketUuid);
 
+    public String getPlayerUuidForSocket(UUID socketUuid);
+
+    public boolean canSocketSeePoint(UUID gameId, UUID socketUuid, double x, double y);
+
     public List<Player> getPlayersVisibleBy(UUID gameId, UUID socketUuid);
 }
