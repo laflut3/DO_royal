@@ -9,12 +9,14 @@ export default class GameMenu {
     winnerBackground : Phaser.GameObjects.Sprite
     winnerText : Phaser.GameObjects.Text
     backEndWebSocket : BackEndWebSocket
+    isOwner : Boolean
 
     constructor(scene: Phaser.Scene, frontConf : FrontConf, backEnd : BackEndWebSocket, isOwner: Boolean) {
         this.positionX = frontConf.width/2;
         this.positionY = frontConf.height - 100;
 
         this.backEndWebSocket = backEnd;
+        this.isOwner = isOwner;
 
         this.startGameButton = scene.add.sprite(this.positionX, this.positionY, 'menuButton', 'button1');
         this.startGameButton.setInteractive();
@@ -50,6 +52,8 @@ export default class GameMenu {
         this.winnerText.setScrollFactor(0);
         this.winnerText.setDepth(1001);
         this.winnerText.setVisible(false);
+
+        this.setOwner(isOwner);
     }
 
     hideMenu() {
@@ -62,9 +66,26 @@ export default class GameMenu {
     }
 
     printMenu() {
+        if (!this.isOwner) {
+            this.hideStartButton();
+            return;
+        }
         this.startGameButton.setActive(true);
         this.startGameButton.setVisible(true);
         this.startGameText.setVisible(true);
+    }
+
+    setOwner(isOwner: Boolean) {
+        this.isOwner = isOwner;
+        if (!isOwner) {
+            this.hideStartButton();
+        }
+    }
+
+    private hideStartButton() {
+        this.startGameButton.setActive(false);
+        this.startGameButton.setVisible(false);
+        this.startGameText.setVisible(false);
     }
 
     printWinner(winnerName: string) {

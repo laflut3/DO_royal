@@ -41,6 +41,25 @@ public class GameServiceTest {
         assertEquals("Player1", gameService.getWinnerName(gameId));
     }
 
+    @Test
+    public void shouldAssignFirstPlayerAsOwnerAndTransferWhenOwnerLeaves() {
+        GameService gameService = new GameService();
+        PlayerService playerService = new PlayerService(gameService);
+        UUID gameId = UUID.randomUUID();
+        UUID firstSocket = UUID.randomUUID();
+        UUID secondSocket = UUID.randomUUID();
+
+        gameService.createGame(gameId, "Game1");
+        playerService.createPlayer(firstSocket, gameId, player("player-1", "Player1", true));
+        playerService.createPlayer(secondSocket, gameId, player("player-2", "Player2", true));
+
+        assertEquals("player-1", gameService.getOwnerPlayerUuid(gameId));
+
+        playerService.removePlayer(firstSocket);
+
+        assertEquals("player-2", gameService.getOwnerPlayerUuid(gameId));
+    }
+
     private Player player(String uuid, String name, boolean alive) {
         Player player = new Player();
         player.setUuid(uuid);

@@ -14,7 +14,8 @@ public enum MessageType {
     NEW_BULLET(5),
     BULLET_DESTROY(6),
     NEW_GAME(7),
-	LIST_GAME(8);
+	LIST_GAME(8),
+    CHAT_MESSAGE(9);
 
 	@Getter(onMethod_ = @JsonValue)
 	private final Integer type;

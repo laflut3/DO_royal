@@ -15,6 +15,10 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class PlayerService implements IPlayerService {
+    private static final double TILE_SIZE = 32.0;
+    private static final double PLAYER_VISIBILITY_TILE_RANGE = 50.0;
+    private static final double PLAYER_VISIBILITY_RANGE = TILE_SIZE * PLAYER_VISIBILITY_TILE_RANGE;
+
     private final GameService gameService;
     private final Map<UUID, PlayerRegistration> registrationsBySocket = new ConcurrentHashMap<>();
 
@@ -38,6 +42,7 @@ public class PlayerService implements IPlayerService {
         }
 
         players.put(player.getUuid(), player);
+        gameService.assignOwnerIfMissing(gameId, player.getUuid());
         registrationsBySocket.put(socketUuid, new PlayerRegistration(gameId, player.getUuid()));
     }
 
@@ -63,20 +68,74 @@ public class PlayerService implements IPlayerService {
         }
 
         gameService.getSession(registration.getGameId())
-                .ifPresent(session -> session.getPlayers().remove(registration.getPlayerUuid()));
+                .ifPresent(session -> {
+                    session.getPlayers().remove(registration.getPlayerUuid());
+                    gameService.transferOwnerIfNeeded(registration.getGameId(), registration.getPlayerUuid());
+                });
         return registration.getGameId();
     }
 
     @Override
-    public List<Player> getPlayersVisibleBy(UUID gameId, UUID socketUuid) {
-        Map<String, Player> players = gameService.getSession(gameId)
-                .map(session -> session.getPlayers())
-                .orElse(Map.of());
+    public String getPlayerUuidForSocket(UUID socketUuid) {
+        PlayerRegistration registration = registrationsBySocket.get(socketUuid);
+        return registration == null ? null : registration.getPlayerUuid();
+    }
 
+    @Override
+    public List<Player> getPlayersVisibleBy(UUID gameId, UUID socketUuid) {
         PlayerRegistration currentPlayer = registrationsBySocket.get(socketUuid);
+        if (currentPlayer == null) {
+            return List.of();
+        }
+
+        GameSession session = gameService.getSession(gameId).orElse(null);
+        if (session == null) {
+            return List.of();
+        }
+
+        Player observer = session.getPlayers().get(currentPlayer.getPlayerUuid());
+        if (observer == null) {
+            return List.of();
+        }
+
+        Map<String, Player> players = session.getPlayers();
         return players.values().stream()
-                .filter(player -> currentPlayer == null || !player.getUuid().equals(currentPlayer.getPlayerUuid()))
+                .filter(player -> !player.getUuid().equals(currentPlayer.getPlayerUuid()))
+                .filter(player -> isPlayerVisible(observer, player, session.getStatus()))
                 .toList();
+    }
+
+    @Override
+    public boolean canSocketSeePoint(UUID gameId, UUID socketUuid, double x, double y) {
+        PlayerRegistration currentPlayer = registrationsBySocket.get(socketUuid);
+        if (currentPlayer == null) {
+            return false;
+        }
+
+        GameSession session = gameService.getSession(gameId).orElse(null);
+        if (session == null) {
+            return false;
+        }
+
+        if (session.getStatus() == GameStatus.LOBBY || session.getStatus() == GameStatus.FINISHED) {
+            return true;
+        }
+
+        Player observer = session.getPlayers().get(currentPlayer.getPlayerUuid());
+        return observer != null && distance(observer.getX(), observer.getY(), x, y) <= PLAYER_VISIBILITY_RANGE;
+    }
+
+    private boolean isPlayerVisible(Player observer, Player target, GameStatus status) {
+        if (status == GameStatus.LOBBY || status == GameStatus.FINISHED) {
+            return true;
+        }
+        return distance(observer.getX(), observer.getY(), target.getX(), target.getY()) <= PLAYER_VISIBILITY_RANGE;
+    }
+
+    private double distance(double firstX, double firstY, double secondX, double secondY) {
+        double xDelta = firstX - secondX;
+        double yDelta = firstY - secondY;
+        return Math.sqrt(xDelta * xDelta + yDelta * yDelta);
     }
 
     private void normalizePlayer(UUID socketUuid, Player player) {

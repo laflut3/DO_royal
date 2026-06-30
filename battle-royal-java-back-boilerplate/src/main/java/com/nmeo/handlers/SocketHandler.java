@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.nmeo.dto.WebSocketMessage;
+import com.nmeo.models.Player;
 import com.nmeo.services.BroadcastService;
 import com.nmeo.services.BroadcastService.DisconnectedSession;
 import com.nmeo.services.IPlayerService;
@@ -79,23 +80,48 @@ public class SocketHandler {
                     break;
                 case NEW_BULLET:
                     gameService.addBullet(newMessage.getGameId(), newMessage.getBullet());
-                    broadcastService.broadcastMessageInGameExcept(
+                    broadcastService.broadcastMessageNearPointInGameExcept(
                             newMessage.getGameId(),
                             newMessage.getSocketUuid(),
-                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()));
+                            newMessage.getBullet().getStartX(),
+                            newMessage.getBullet().getStartY(),
+                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()),
+                            playerService);
                     ctx.send(WebSocketMessage.ok());
                     break;
                 case BULLET_DESTROY:
                     gameService.removeBullet(newMessage.getGameId(), newMessage.getBullet());
-                    broadcastService.broadcastMessageInGameExcept(
+                    broadcastService.broadcastMessageNearPointInGameExcept(
                             newMessage.getGameId(),
                             newMessage.getSocketUuid(),
-                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()));
+                            newMessage.getBullet().getStartX(),
+                            newMessage.getBullet().getStartY(),
+                            WebSocketMessage.bullet(newMessage.getType(), newMessage.getGameId(), newMessage.getBullet()),
+                            playerService);
                     ctx.send(WebSocketMessage.ok());
                     break;
                 case GAME_STATE:
+                    String statePlayerUuid = playerService.getPlayerUuidForSocket(newMessage.getSocketUuid());
+                    if (!gameService.isOwner(newMessage.getGameId(), statePlayerUuid)) {
+                        throw new IllegalArgumentException("Only the game owner can update the game state.");
+                    }
                     gameService.updateGameStatus(newMessage.getGameId(), newMessage.getGameStatus());
                     broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    ctx.send(WebSocketMessage.ok());
+                    break;
+                case CHAT_MESSAGE:
+                    String chatPlayerUuid = playerService.getPlayerUuidForSocket(newMessage.getSocketUuid());
+                    Player chatPlayer = gameService.getPlayer(newMessage.getGameId(), chatPlayerUuid);
+                    if (chatPlayer == null) {
+                        throw new IllegalArgumentException("player not found");
+                    }
+                    broadcastService.broadcastMessageInGame(
+                            newMessage.getGameId(),
+                            WebSocketMessage.chatMessage(
+                                    newMessage.getGameId(),
+                                    chatPlayer.getUuid(),
+                                    chatPlayer.getName(),
+                                    normalizeChatMessage(newMessage.getChatMessage())));
                     ctx.send(WebSocketMessage.ok());
                     break;
                 default:
@@ -107,5 +133,16 @@ public class SocketHandler {
             logger.error(exception.getMessage());
             ctx.send(WebSocketMessage.ko(exception.getMessage()));
         }
+    }
+
+    private static String normalizeChatMessage(String message) {
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("chat message is required");
+        }
+        String normalizedMessage = message.strip();
+        if (normalizedMessage.length() > 120) {
+            return normalizedMessage.substring(0, 120);
+        }
+        return normalizedMessage;
     }
 }

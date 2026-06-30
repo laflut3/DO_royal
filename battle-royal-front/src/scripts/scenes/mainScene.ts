@@ -60,6 +60,7 @@ export default class MainScene extends Phaser.Scene {
   battleZoneDuration : number
   battleZoneGraphics : Phaser.GameObjects.Graphics
   minimapGraphics : Phaser.GameObjects.Graphics
+  minimapHintText : Phaser.GameObjects.Text
   pickups : Array<BattlePickup>
   pickupGroup : Phaser.GameObjects.Group
   previousGameStatus : GameStatus
@@ -73,6 +74,12 @@ export default class MainScene extends Phaser.Scene {
   waitingControl : keyof ControlSettings | null
   isPausedByMenu : boolean
   lobbyBounds : Phaser.Geom.Rectangle
+  chatMessages : Array<string>
+  chatLogText : Phaser.GameObjects.Text
+  chatInputBackground : Phaser.GameObjects.Rectangle
+  chatInputText : Phaser.GameObjects.Text
+  chatInputDom : Phaser.GameObjects.DOMElement | null
+  isChatEditing : boolean
 
   constructor() {
     super({ key: 'MainScene' });
@@ -113,6 +120,9 @@ export default class MainScene extends Phaser.Scene {
     this.pauseSettingsRows = new Map<string, Phaser.GameObjects.Text>();
     this.waitingControl = null;
     this.isPausedByMenu = false;
+    this.isChatEditing = false;
+    this.chatInputDom = null;
+    this.chatMessages = new Array<string>();
 
     // Create distant players array
     this.multiPlayers = new MultiPlayers(this);
@@ -130,7 +140,15 @@ export default class MainScene extends Phaser.Scene {
     this.previousShootKeyDown = false;
 
     // Back end connection, adding web socket
-    this.backEndWebSocket = new BackEndWebSocket(this.player, this.multiPlayers, this.bulletsGroup, this.gameUuid, this.gameFinished.bind(this), this.markRemoteShooterOnMinimap.bind(this));
+    this.backEndWebSocket = new BackEndWebSocket(
+      this.player,
+      this.multiPlayers,
+      this.bulletsGroup,
+      this.gameUuid,
+      this.gameFinished.bind(this),
+      this.markRemoteShooterOnMinimap.bind(this),
+      this.receiveChatMessage.bind(this)
+    );
     this.previousGameStatus = this.backEndWebSocket.gameStatus;
 
     // Display fps
@@ -147,6 +165,9 @@ export default class MainScene extends Phaser.Scene {
 
     // Fire bullet when player clicks
     this.input.on('pointerdown', (pointer) => {
+      if (this.isChatEditing || this.isPausedByMenu) {
+        return;
+      }
       if (this.waitingControl !== null && this.pauseSettingsPanel.visible && pointer.rightButtonDown()) {
         this.setControl(this.waitingControl, "RIGHT_CLICK");
         return;
@@ -167,11 +188,19 @@ export default class MainScene extends Phaser.Scene {
     this.gameMenu = new GameMenu(this, this.frontConf, this.backEndWebSocket, this.gameOwner);
     this.createPauseMenu();
     this.createLobbyBounds();
+    this.createChatUi();
 
   }
 
   update(time: number, delta: number) {
+    this.gameOwner = this.backEndWebSocket.isOwner;
+    if (this.gameMenu) {
+      this.gameMenu.setOwner(this.gameOwner);
+    }
     if(this.backEndWebSocket.gameStatus == GameStatus.LOBBY || this.backEndWebSocket.gameStatus == GameStatus.FINISHED) {
+      if (this.gameOwner) {
+        this.gameMenu.printMenu();
+      }
       this.gameMenu.update(this.cameraManager.mainCamera.scrollX, this.cameraManager.mainCamera.scrollY);
     } else {
       this.gameMenu.hideMenu();
@@ -245,6 +274,15 @@ export default class MainScene extends Phaser.Scene {
     this.minimapGraphics = this.add.graphics();
     this.minimapGraphics.setScrollFactor(0);
     this.minimapGraphics.setDepth(1000);
+    this.minimapHintText = this.add.text(0, 0, "Esc : menu", {
+      fontSize: "13px",
+      color: "#d7eef2",
+      stroke: "#0b1220",
+      strokeThickness: 3
+    });
+    this.minimapHintText.setOrigin(0.5, 0);
+    this.minimapHintText.setScrollFactor(0);
+    this.minimapHintText.setDepth(1001);
   }
 
   createPickupGroup() {
@@ -322,6 +360,7 @@ export default class MainScene extends Phaser.Scene {
     const scalePointY = (worldY: number) => y + worldY * scaleY;
 
     this.minimapGraphics.clear();
+    this.minimapHintText.setPosition(x + width / 2, y + height + 6);
     this.minimapGraphics.fillStyle(0x0b1220, 0.78);
     this.minimapGraphics.fillRoundedRect(x, y, width, height, 6);
     this.minimapGraphics.lineStyle(2, 0xffffff, 0.85);
@@ -442,7 +481,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   readPlayerControls(): PlayerControlState {
-    if (this.isPausedByMenu) {
+    if (this.isPausedByMenu || this.isChatEditing) {
       return {
         up: false,
         down: false,
@@ -478,6 +517,10 @@ export default class MainScene extends Phaser.Scene {
   }
 
   updateKeyboardShooting() {
+    if (this.isChatEditing) {
+      this.previousShootKeyDown = false;
+      return;
+    }
     const shootControl = this.controlSettings.shoot;
     if (shootControl === "RIGHT_CLICK" || shootControl === "LEFT_CLICK") {
       this.previousShootKeyDown = false;
@@ -569,11 +612,14 @@ export default class MainScene extends Phaser.Scene {
     this.pauseMenu.setVisible(false);
 
     const overlay = this.add.rectangle(centerX, centerY, this.frontConf.width, this.frontConf.height, 0x02070a, 0.68);
+    overlay.setScrollFactor(0);
     overlay.setInteractive();
     const panel = this.add.rectangle(centerX, centerY, 420, 290, 0x0d1b24, 0.96);
+    panel.setScrollFactor(0);
     panel.setStrokeStyle(2, 0x5fd0b5, 0.75);
     const title = this.add.text(centerX, centerY - 105, "Pause");
     title.setOrigin(0.5, 0.5);
+    title.setScrollFactor(0);
     title.setFontSize(34);
     title.setColor("#f6fbff");
 
@@ -594,21 +640,123 @@ export default class MainScene extends Phaser.Scene {
       }
       this.togglePauseMenu();
     });
+    this.input.keyboard.on("keydown-ENTER", (event: KeyboardEvent) => {
+      if (event.repeat || this.isPausedByMenu || this.waitingControl !== null) {
+        return;
+      }
+      event.preventDefault();
+      this.openChatInput();
+    });
+  }
+
+  createChatUi() {
+    this.chatLogText = this.add.text(16, 126, "", {
+      fontSize: "15px",
+      color: "#f6fbff",
+      stroke: "#0b141c",
+      strokeThickness: 3,
+      wordWrap: { width: 340, useAdvancedWrap: true }
+    });
+    this.chatLogText.setScrollFactor(0);
+    this.chatLogText.setDepth(2500);
+
+    this.chatInputBackground = this.add.rectangle(184, this.frontConf.height - 26, 336, 32, 0x0d1b24, 0.82);
+    this.chatInputBackground.setStrokeStyle(1, 0x5fd0b5, 0.65);
+    this.chatInputBackground.setScrollFactor(0);
+    this.chatInputBackground.setDepth(2500);
+    this.chatInputBackground.setInteractive();
+    this.chatInputBackground.on("pointerdown", () => this.openChatInput());
+
+    this.chatInputText = this.add.text(26, this.frontConf.height - 26, "Enter pour parler");
+    this.chatInputText.setOrigin(0, 0.5);
+    this.chatInputText.setColor("#b7d8de");
+    this.chatInputText.setFontSize(15);
+    this.chatInputText.setScrollFactor(0);
+    this.chatInputText.setDepth(2501);
+    this.chatInputText.setInteractive();
+    this.chatInputText.on("pointerdown", () => this.openChatInput());
+  }
+
+  openChatInput() {
+    if (this.isChatEditing || this.isPausedByMenu || this.waitingControl !== null) {
+      return;
+    }
+    this.isChatEditing = true;
+    this.chatInputText.setVisible(false);
+    this.chatInputDom = this.add.dom(184, this.frontConf.height - 26).createFromHTML(
+      '<input maxlength="120" style="width:316px;height:26px;padding:0 8px;border:0;outline:0;background:#0d1b24;color:#f6fbff;font:15px monospace;" />'
+    );
+    this.chatInputDom.setScrollFactor(0);
+    this.chatInputDom.setDepth(2600);
+    const input = this.chatInputDom.node.querySelector("input") as HTMLInputElement;
+    input.focus();
+    input.addEventListener("keydown", (event: KeyboardEvent) => {
+      event.stopPropagation();
+      if (event.key === "Enter") {
+        event.preventDefault();
+        this.closeChatInput(true);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        this.closeChatInput(false);
+      }
+    });
+    input.addEventListener("blur", () => this.closeChatInput(true));
+  }
+
+  closeChatInput(shouldSend: boolean) {
+    if (!this.isChatEditing) {
+      return;
+    }
+    const input = this.chatInputDom ? this.chatInputDom.node.querySelector("input") as HTMLInputElement : null;
+    const message = input ? input.value.trim() : "";
+    if (shouldSend && message.length > 0) {
+      this.backEndWebSocket.sendChatMessage(message);
+    }
+    if (this.chatInputDom) {
+      this.chatInputDom.destroy();
+      this.chatInputDom = null;
+    }
+    this.chatInputText.setVisible(true);
+    this.chatInputText.setText("Enter pour parler");
+    this.chatInputText.setColor("#b7d8de");
+    this.isChatEditing = false;
+  }
+
+  receiveChatMessage(playerUuid: string, playerName: string, chatMessage: string) {
+    const safeName = playerName || "Joueur";
+    this.chatMessages.push(safeName + " : " + chatMessage);
+    while (this.chatMessages.length > 8) {
+      this.chatMessages.shift();
+    }
+    this.chatLogText.setText(this.chatMessages.join("\n"));
+
+    if (playerUuid === this.player.uuid) {
+      this.player.showChatBubble(chatMessage);
+      return;
+    }
+    const remotePlayer = this.multiPlayers.playersMulti.find((player: Player) => player.uuid === playerUuid);
+    if (remotePlayer) {
+      remotePlayer.showChatBubble(chatMessage);
+    }
   }
 
   canUsePauseMenu(): boolean {
-    return this.backEndWebSocket.gameStatus === GameStatus.STARTING || this.backEndWebSocket.gameStatus === GameStatus.PLAYING;
+    return !this.isChatEditing;
   }
 
   createPauseButton(x: number, y: number, label: string, callback: Function): Array<Phaser.GameObjects.GameObject> {
     const button = this.add.rectangle(x, y, 210, 40, 0x122b36, 0.95);
+    button.setScrollFactor(0);
     button.setStrokeStyle(1, 0xf4d35e, 0.7);
     button.setInteractive();
     button.on("pointerdown", () => callback());
     const text = this.add.text(x, y, label);
     text.setOrigin(0.5, 0.5);
+    text.setScrollFactor(0);
     text.setFontSize(18);
     text.setColor("#f6fbff");
+    text.setInteractive();
+    text.on("pointerdown", () => callback());
     return [button, text];
   }
 
@@ -621,11 +769,14 @@ export default class MainScene extends Phaser.Scene {
     this.pauseSettingsPanel.setVisible(false);
 
     const overlay = this.add.rectangle(centerX, centerY, this.frontConf.width, this.frontConf.height, 0x02070a, 0.72);
+    overlay.setScrollFactor(0);
     overlay.setInteractive();
     const panel = this.add.rectangle(centerX, centerY, 520, 430, 0x0d1b24, 0.96);
+    panel.setScrollFactor(0);
     panel.setStrokeStyle(2, 0x5fd0b5, 0.7);
     const title = this.add.text(centerX, centerY - 180, "Parametres des touches");
     title.setOrigin(0.5, 0.5);
+    title.setScrollFactor(0);
     title.setFontSize(28);
     title.setColor("#f6fbff");
     this.pauseSettingsPanel.add([overlay, panel, title]);
@@ -634,14 +785,17 @@ export default class MainScene extends Phaser.Scene {
       const y = centerY - 120 + index * 44;
       const label = this.add.text(centerX - 170, y, action.label);
       label.setOrigin(0, 0.5);
+      label.setScrollFactor(0);
       label.setFontSize(20);
       label.setColor("#b7d8de");
       const valueBox = this.add.rectangle(centerX + 120, y, 180, 30, 0x122b36, 0.9);
+      valueBox.setScrollFactor(0);
       valueBox.setStrokeStyle(1, 0xf4d35e, 0.65);
       valueBox.setInteractive();
       valueBox.on("pointerdown", () => this.waitForControl(action.id));
       const valueText = this.add.text(centerX + 120, y, keyboardCodeToLabel(this.controlSettings[action.id]));
       valueText.setOrigin(0.5, 0.5);
+      valueText.setScrollFactor(0);
       valueText.setFontSize(18);
       valueText.setColor("#f6fbff");
       valueText.setInteractive();
@@ -823,10 +977,5 @@ export default class MainScene extends Phaser.Scene {
 
   gameFinished(winnerName: string) {
     this.gameMenu.printWinner(winnerName);
-    if(this.gameOwner) {
-      this.gameMenu.printMenu();
-      // Set lobby after 1 seconds
-      setTimeout(this.backEndWebSocket.lobbyGame.bind(this.backEndWebSocket), 1000);
-    }
   }
 }

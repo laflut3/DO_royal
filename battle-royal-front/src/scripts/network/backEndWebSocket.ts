@@ -17,6 +17,7 @@ export enum MessageType {
     BULLET_DESTROY = 6,
     NEW_GAME = 7,
 	LIST_GAME = 8,
+    CHAT_MESSAGE = 9,
 };
 
 export enum KeyWords {
@@ -28,7 +29,11 @@ export enum KeyWords {
     GAME_ID = "gameId",
     GAME_NAME = "gameName",
     GAME_STATUS = "gameStatus",
-    WINNER_NAME = "winnerName"
+    WINNER_NAME = "winnerName",
+    OWNER_PLAYER_UUID = "ownerPlayerUuid",
+    CHAT_MESSAGE = "chatMessage",
+    PLAYER_UUID = "playerUuid",
+    PLAYER_NAME = "playerName"
 }
 
 export enum GameStatus {
@@ -54,9 +59,12 @@ export default class BackEndWebSocket {
     finishCallback : any
     winnerName : string
     remoteBulletCallback : any
+    chatCallback : any
+    ownerPlayerUuid : string
+    isOwner : boolean
 
 
-    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any) {
+    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any) {
 
         this.otherPlayerMap = new Map<string, PlayerInterface>();
         this.multiPlayer = multiPlayer;
@@ -64,6 +72,7 @@ export default class BackEndWebSocket {
         this.currentPlayer = player;
         this.finishCallback = finishCallback;
         this.remoteBulletCallback = remoteBulletCallback;
+        this.chatCallback = chatCallback;
         let frontConf = new FrontConf();
         let url = frontConf.webSocketUrl();
 
@@ -71,6 +80,8 @@ export default class BackEndWebSocket {
         this.uuid = Phaser.Utils.String.UUID();
         this.gameUuid = gameUuid;
         this.gameStatus = GameStatus.LOBBY;
+        this.ownerPlayerUuid = "";
+        this.isOwner = false;
 
         this.webSocket.onopen = (ev: Event) => {
             this.registerPlayer(player);
@@ -92,6 +103,8 @@ export default class BackEndWebSocket {
             if(message[KeyWords.MESSAGE_TYPE] === MessageType.GAME_STATE) {
                 this.multiPlayersPositionMessageHandler(message[KeyWords.PLAYERS_INFO]);
                 this.gameStatusHandler(message[KeyWords.GAME_STATUS]);
+                this.ownerPlayerUuid = message[KeyWords.OWNER_PLAYER_UUID] || "";
+                this.isOwner = this.ownerPlayerUuid === this.currentPlayer.uuid;
                 if(message[KeyWords.WINNER_NAME] != "") {
                     this.winnerName = message[KeyWords.WINNER_NAME];
                 }
@@ -101,6 +114,8 @@ export default class BackEndWebSocket {
                 this.newBulletHandler(message[KeyWords.BULLET_INFO]);
             } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.BULLET_DESTROY) {
                 this.destroyBulletHandler(message[KeyWords.BULLET_INFO]);
+            } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.CHAT_MESSAGE) {
+                this.chatMessageHandler(message);
             }
         };
 
@@ -230,8 +245,31 @@ export default class BackEndWebSocket {
         this.bulletsGroup.deleteBulletFromUuid(messageBullet["uuid"]);
     }
 
+    chatMessageHandler(message : any) {
+        if(this.chatCallback) {
+            this.chatCallback(
+                message[KeyWords.PLAYER_UUID],
+                message[KeyWords.PLAYER_NAME],
+                message[KeyWords.CHAT_MESSAGE]
+            );
+        }
+    }
+
+    sendChatMessage(chatMessage: string) {
+        if(this.webSocket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
+        message[KeyWords.MESSAGE_TYPE] = MessageType.CHAT_MESSAGE;
+        message[KeyWords.CHAT_MESSAGE] = chatMessage;
+        message[KeyWords.GAME_ID] = this.gameUuid;
+        this.webSocket.send(JSON.stringify(message));
+    }
+
     startPlaying() {
         let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
         message[KeyWords.MESSAGE_TYPE] = MessageType.GAME_STATE;
         message[KeyWords.GAME_STATUS] = GameStatus.PLAYING;
         message[KeyWords.GAME_ID] = this.gameUuid;
@@ -241,6 +279,7 @@ export default class BackEndWebSocket {
     startGame() {
         // Send starting message
         let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
         message[KeyWords.MESSAGE_TYPE] = MessageType.GAME_STATE;
         message[KeyWords.GAME_STATUS] = GameStatus.STARTING;
         message[KeyWords.GAME_ID] = this.gameUuid;
@@ -252,6 +291,7 @@ export default class BackEndWebSocket {
     lobbyGame() {
         // Send starting message
         let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
         message[KeyWords.MESSAGE_TYPE] = MessageType.GAME_STATE;
         message[KeyWords.GAME_STATUS] = GameStatus.LOBBY;
         message[KeyWords.GAME_ID] = this.gameUuid;
