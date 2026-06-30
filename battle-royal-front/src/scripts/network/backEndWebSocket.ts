@@ -24,6 +24,7 @@ export enum KeyWords {
     MESSAGE_TYPE = "type",
     PLAYER_INFO = "player",
     PLAYERS_INFO = "players",
+    PLAYER_UUIDS = "playerUuids",
     SOCKET_UUID = "socketUuid",
     BULLET_INFO = "bullet",
     GAME_ID = "gameId",
@@ -33,7 +34,9 @@ export enum KeyWords {
     OWNER_PLAYER_UUID = "ownerPlayerUuid",
     CHAT_MESSAGE = "chatMessage",
     PLAYER_UUID = "playerUuid",
-    PLAYER_NAME = "playerName"
+    PLAYER_NAME = "playerName",
+    MAP_ID = "mapId",
+    MAP_NAME = "mapName"
 }
 
 export enum GameStatus {
@@ -62,6 +65,7 @@ export default class BackEndWebSocket {
     chatCallback : any
     ownerPlayerUuid : string
     isOwner : boolean
+    playerUuids : Array<string>
 
 
     constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any) {
@@ -82,6 +86,7 @@ export default class BackEndWebSocket {
         this.gameStatus = GameStatus.LOBBY;
         this.ownerPlayerUuid = "";
         this.isOwner = false;
+        this.playerUuids = new Array<string>();
 
         this.webSocket.onopen = (ev: Event) => {
             this.registerPlayer(player);
@@ -102,6 +107,7 @@ export default class BackEndWebSocket {
 
             if(message[KeyWords.MESSAGE_TYPE] === MessageType.GAME_STATE) {
                 this.multiPlayersPositionMessageHandler(message[KeyWords.PLAYERS_INFO]);
+                this.playerUuids = message[KeyWords.PLAYER_UUIDS] || this.playerUuids;
                 this.gameStatusHandler(message[KeyWords.GAME_STATUS]);
                 this.ownerPlayerUuid = message[KeyWords.OWNER_PLAYER_UUID] || "";
                 this.isOwner = this.ownerPlayerUuid === this.currentPlayer.uuid;
@@ -305,7 +311,13 @@ export default class BackEndWebSocket {
         switch(this.gameStatus) {
             case GameStatus.STARTING:
                 if(previousGameStatus !== GameStatus.STARTING) {
-                    this.currentPlayer.goToSpawnPoint();
+                    const spawnOrder = this.playerUuids.includes(this.currentPlayer.uuid)
+                        ? [...this.playerUuids].sort()
+                        : [...this.playerUuids, this.currentPlayer.uuid].sort();
+                    this.currentPlayer.goToSpawnPoint(
+                        spawnOrder.indexOf(this.currentPlayer.uuid),
+                        spawnOrder.length
+                    );
                 }
                 break;
             case GameStatus.LOBBY:

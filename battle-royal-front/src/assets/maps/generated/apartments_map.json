@@ -40035,9 +40035,8 @@
       "name": "Objects",
       "objects": [
         {
-          "id": 45,
+          "id": 1,
           "name": "Lobby Point",
-          "point": true,
           "rotation": 0,
           "type": "",
           "visible": true,
@@ -40047,40 +40046,40 @@
           "y": 264
         },
         {
-          "id": 139,
+          "id": 2,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1072,
-          "y": 1232
+          "x": 416,
+          "y": 608
         },
         {
-          "id": 140,
+          "id": 3,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1616,
-          "y": 1424
+          "x": 1434,
+          "y": 608
         },
         {
-          "id": 141,
+          "id": 4,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2160,
-          "y": 1232
+          "x": 2784,
+          "y": 608
         },
         {
-          "id": 142,
+          "id": 5,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40091,7 +40090,40 @@
           "y": 1424
         },
         {
-          "id": 143,
+          "id": 6,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1072,
+          "y": 1232
+        },
+        {
+          "id": 7,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1616,
+          "y": 1424
+        },
+        {
+          "id": 8,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2160,
+          "y": 1232
+        },
+        {
+          "id": 9,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40102,29 +40134,7 @@
           "y": 1424
         },
         {
-          "id": 144,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1296,
-          "y": 2416
-        },
-        {
-          "id": 145,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1648,
-          "y": 2416
-        },
-        {
-          "id": 146,
+          "id": 10,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40135,150 +40145,7 @@
           "y": 2576
         },
         {
-          "id": 147,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2416,
-          "y": 2576
-        },
-        {
-          "id": 148,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2704,
-          "y": 2320
-        },
-        {
-          "id": 149,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 912,
-          "y": 3696
-        },
-        {
-          "id": 150,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1232,
-          "y": 3600
-        },
-        {
-          "id": 151,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1872,
-          "y": 3696
-        },
-        {
-          "id": 152,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2512,
-          "y": 3632
-        },
-        {
-          "id": 153,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 976,
-          "y": 4784
-        },
-        {
-          "id": 154,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2256,
-          "y": 4784
-        },
-        {
-          "id": 155,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1456,
-          "y": 5072
-        },
-        {
-          "id": 156,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1808,
-          "y": 5072
-        },
-        {
-          "id": 157,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 976,
-          "y": 5264
-        },
-        {
-          "id": 158,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2320,
-          "y": 5264
-        },
-        {
-          "id": 159,
-          "name": "Spawn Point",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1616,
-          "y": 2224
-        },
-        {
-          "id": 160,
+          "id": 11,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40289,7 +40156,29 @@
           "y": 2192
         },
         {
-          "id": 161,
+          "id": 12,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1296,
+          "y": 2416
+        },
+        {
+          "id": 13,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1616,
+          "y": 2224
+        },
+        {
+          "id": 14,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40300,7 +40189,73 @@
           "y": 2192
         },
         {
-          "id": 162,
+          "id": 15,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2416,
+          "y": 2576
+        },
+        {
+          "id": 16,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2704,
+          "y": 2320
+        },
+        {
+          "id": 17,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 912,
+          "y": 3696
+        },
+        {
+          "id": 18,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1232,
+          "y": 3600
+        },
+        {
+          "id": 19,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1872,
+          "y": 3696
+        },
+        {
+          "id": 20,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2512,
+          "y": 3632
+        },
+        {
+          "id": 21,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
@@ -40311,62 +40266,84 @@
           "y": 3312
         },
         {
-          "id": 163,
+          "id": 22,
           "name": "Spawn Point",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1600,
-          "y": 6048
+          "x": 976,
+          "y": 4784
         },
         {
-          "id": 70,
+          "id": 23,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1456,
+          "y": 5072
+        },
+        {
+          "id": 24,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1808,
+          "y": 5072
+        },
+        {
+          "id": 25,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2256,
+          "y": 4784
+        },
+        {
+          "id": 26,
+          "name": "Spawn Point",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2320,
+          "y": 5264
+        },
+        {
+          "id": 27,
           "name": "plant",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1184,
+          "x": 1088,
           "y": 224
         },
         {
-          "id": 71,
-          "name": "plant",
+          "id": 28,
+          "name": "sofa",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1920,
-          "y": 224
+          "x": 1280,
+          "y": 256
         },
         {
-          "id": 72,
-          "name": "bookshelf",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1216,
-          "y": 384
-        },
-        {
-          "id": 73,
-          "name": "bookshelf",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1856,
-          "y": 384
-        },
-        {
-          "id": 74,
+          "id": 29,
           "name": "round_table",
           "rotation": 0,
           "type": "",
@@ -40377,7 +40354,51 @@
           "y": 320
         },
         {
-          "id": 75,
+          "id": 30,
+          "name": "sofa",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1792,
+          "y": 256
+        },
+        {
+          "id": 31,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2048,
+          "y": 224
+        },
+        {
+          "id": 32,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1216,
+          "y": 384
+        },
+        {
+          "id": 33,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1856,
+          "y": 384
+        },
+        {
+          "id": 34,
           "name": "sofa",
           "rotation": 0,
           "type": "",
@@ -40388,7 +40409,7 @@
           "y": 1120
         },
         {
-          "id": 76,
+          "id": 35,
           "name": "tv",
           "rotation": 0,
           "type": "",
@@ -40399,7 +40420,7 @@
           "y": 1152
         },
         {
-          "id": 77,
+          "id": 36,
           "name": "round_table",
           "rotation": 0,
           "type": "",
@@ -40410,29 +40431,29 @@
           "y": 1376
         },
         {
-          "id": 78,
+          "id": 37,
           "name": "chair",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 320,
+          "x": 288,
           "y": 1472
         },
         {
-          "id": 79,
+          "id": 38,
           "name": "chair",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 640,
+          "x": 576,
           "y": 1472
         },
         {
-          "id": 80,
+          "id": 39,
           "name": "plant",
           "rotation": 0,
           "type": "",
@@ -40443,95 +40464,40 @@
           "y": 1536
         },
         {
-          "id": 81,
-          "name": "counter",
+          "id": 40,
+          "name": "bookshelf",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2432,
-          "y": 1056
-        },
-        {
-          "id": 82,
-          "name": "sink",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2624,
-          "y": 1056
-        },
-        {
-          "id": 83,
-          "name": "stove",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2816,
-          "y": 1056
-        },
-        {
-          "id": 84,
-          "name": "table",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2560,
-          "y": 1376
-        },
-        {
-          "id": 85,
-          "name": "chair",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2496,
-          "y": 1504
-        },
-        {
-          "id": 86,
-          "name": "chair",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2816,
-          "y": 1504
-        },
-        {
-          "id": 87,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2912,
+          "x": 704,
           "y": 1536
         },
         {
-          "id": 88,
+          "id": 41,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 960,
+          "y": 1024
+        },
+        {
+          "id": 42,
           "name": "dresser",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2400,
-          "y": 1536
+          "x": 1280,
+          "y": 1024
         },
         {
-          "id": 89,
+          "id": 43,
           "name": "table",
           "rotation": 0,
           "type": "",
@@ -40542,7 +40508,7 @@
           "y": 1120
         },
         {
-          "id": 90,
+          "id": 44,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40553,7 +40519,7 @@
           "y": 1280
         },
         {
-          "id": 91,
+          "id": 45,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40564,7 +40530,51 @@
           "y": 1280
         },
         {
-          "id": 92,
+          "id": 46,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 960,
+          "y": 1504
+        },
+        {
+          "id": 47,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1280,
+          "y": 1504
+        },
+        {
+          "id": 48,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1760,
+          "y": 1024
+        },
+        {
+          "id": 49,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2208,
+          "y": 1024
+        },
+        {
+          "id": 50,
           "name": "table",
           "rotation": 0,
           "type": "",
@@ -40575,7 +40585,7 @@
           "y": 1120
         },
         {
-          "id": 93,
+          "id": 51,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40586,7 +40596,7 @@
           "y": 1280
         },
         {
-          "id": 94,
+          "id": 52,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40597,18 +40607,194 @@
           "y": 1280
         },
         {
-          "id": 95,
+          "id": 53,
           "name": "plant",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1568,
+          "x": 1760,
           "y": 1504
         },
         {
-          "id": 96,
+          "id": 54,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2208,
+          "y": 1504
+        },
+        {
+          "id": 55,
+          "name": "counter",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2432,
+          "y": 1056
+        },
+        {
+          "id": 56,
+          "name": "sink",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2624,
+          "y": 1056
+        },
+        {
+          "id": 57,
+          "name": "stove",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2816,
+          "y": 1056
+        },
+        {
+          "id": 58,
+          "name": "table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2560,
+          "y": 1376
+        },
+        {
+          "id": 59,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2496,
+          "y": 1504
+        },
+        {
+          "id": 60,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2816,
+          "y": 1504
+        },
+        {
+          "id": 61,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2400,
+          "y": 1536
+        },
+        {
+          "id": 62,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2912,
+          "y": 1536
+        },
+        {
+          "id": 63,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 256,
+          "y": 2048
+        },
+        {
+          "id": 64,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 512,
+          "y": 2080
+        },
+        {
+          "id": 65,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 256,
+          "y": 2368
+        },
+        {
+          "id": 66,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 608,
+          "y": 2368
+        },
+        {
+          "id": 67,
+          "name": "round_table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 448,
+          "y": 2624
+        },
+        {
+          "id": 68,
+          "name": "sofa",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 960,
+          "y": 2080
+        },
+        {
+          "id": 69,
+          "name": "tv",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1280,
+          "y": 2080
+        },
+        {
+          "id": 70,
           "name": "table",
           "rotation": 0,
           "type": "",
@@ -40619,7 +40805,7 @@
           "y": 2208
         },
         {
-          "id": 97,
+          "id": 71,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40630,7 +40816,7 @@
           "y": 2368
         },
         {
-          "id": 98,
+          "id": 72,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40641,7 +40827,40 @@
           "y": 2368
         },
         {
-          "id": 99,
+          "id": 73,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 960,
+          "y": 2624
+        },
+        {
+          "id": 74,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1472,
+          "y": 2080
+        },
+        {
+          "id": 75,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1728,
+          "y": 2080
+        },
+        {
+          "id": 76,
           "name": "table",
           "rotation": 0,
           "type": "",
@@ -40652,7 +40871,7 @@
           "y": 2208
         },
         {
-          "id": 100,
+          "id": 77,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40663,7 +40882,7 @@
           "y": 2368
         },
         {
-          "id": 101,
+          "id": 78,
           "name": "chair",
           "rotation": 0,
           "type": "",
@@ -40674,19 +40893,8 @@
           "y": 2368
         },
         {
-          "id": 102,
-          "name": "fla",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 992,
-          "y": 2624
-        },
-        {
-          "id": 103,
-          "name": "fla",
+          "id": 79,
+          "name": "bookshelf",
           "rotation": 0,
           "type": "",
           "visible": true,
@@ -40696,95 +40904,271 @@
           "y": 2624
         },
         {
-          "id": 104,
-          "name": "bookshelf",
+          "id": 80,
+          "name": "sofa",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 256,
+          "x": 2144,
           "y": 2080
         },
         {
-          "id": 105,
-          "name": "bookshelf",
+          "id": 81,
+          "name": "tv",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 608,
+          "x": 2432,
           "y": 2080
         },
         {
-          "id": 106,
-          "name": "bookshelf",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 256,
-          "y": 2496
-        },
-        {
-          "id": 107,
+          "id": 82,
           "name": "table",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 480,
-          "y": 2400
+          "x": 2176,
+          "y": 2208
         },
         {
-          "id": 108,
+          "id": 83,
           "name": "chair",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 480,
-          "y": 2560
+          "x": 2144,
+          "y": 2368
         },
         {
-          "id": 109,
+          "id": 84,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2432,
+          "y": 2368
+        },
+        {
+          "id": 85,
           "name": "plant",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 672,
+          "x": 2432,
           "y": 2624
         },
         {
-          "id": 110,
+          "id": 86,
           "name": "bed",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1984,
-          "y": 2112
+          "x": 2816,
+          "y": 2048
         },
         {
-          "id": 111,
+          "id": 87,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2944,
+          "y": 2080
+        },
+        {
+          "id": 88,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2720,
+          "y": 2368
+        },
+        {
+          "id": 89,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2944,
+          "y": 2368
+        },
+        {
+          "id": 90,
+          "name": "round_table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2880,
+          "y": 2624
+        },
+        {
+          "id": 91,
+          "name": "sofa",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 352,
+          "y": 3312
+        },
+        {
+          "id": 92,
+          "name": "tv",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 704,
+          "y": 3312
+        },
+        {
+          "id": 93,
+          "name": "round_table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 576,
+          "y": 3440
+        },
+        {
+          "id": 94,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 448,
+          "y": 3568
+        },
+        {
+          "id": 95,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 704,
+          "y": 3568
+        },
+        {
+          "id": 96,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 928,
+          "y": 3696
+        },
+        {
+          "id": 97,
           "name": "bed",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2560,
-          "y": 2112
+          "x": 1088,
+          "y": 3312
         },
         {
-          "id": 112,
+          "id": 98,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1344,
+          "y": 3312
+        },
+        {
+          "id": 99,
+          "name": "table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1216,
+          "y": 3440
+        },
+        {
+          "id": 100,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1088,
+          "y": 3568
+        },
+        {
+          "id": 101,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1344,
+          "y": 3568
+        },
+        {
+          "id": 102,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1216,
+          "y": 3824
+        },
+        {
+          "id": 103,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1664,
+          "y": 3312
+        },
+        {
+          "id": 104,
           "name": "dresser",
           "rotation": 0,
           "type": "",
@@ -40792,18 +41176,106 @@
           "width": 0,
           "height": 0,
           "x": 1920,
-          "y": 2592
+          "y": 3312
         },
         {
-          "id": 113,
-          "name": "dresser",
+          "id": 105,
+          "name": "table",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2752,
-          "y": 2592
+          "x": 1792,
+          "y": 3440
+        },
+        {
+          "id": 106,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1664,
+          "y": 3568
+        },
+        {
+          "id": 107,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1920,
+          "y": 3568
+        },
+        {
+          "id": 108,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1792,
+          "y": 3824
+        },
+        {
+          "id": 109,
+          "name": "sofa",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2400,
+          "y": 3312
+        },
+        {
+          "id": 110,
+          "name": "tv",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2688,
+          "y": 3312
+        },
+        {
+          "id": 111,
+          "name": "round_table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2560,
+          "y": 3440
+        },
+        {
+          "id": 112,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2432,
+          "y": 3568
+        },
+        {
+          "id": 113,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2688,
+          "y": 3568
         },
         {
           "id": 114,
@@ -40813,162 +41285,162 @@
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2336,
-          "y": 2560
+          "x": 2912,
+          "y": 3696
         },
         {
           "id": 115,
-          "name": "bookshelf",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2304,
-          "y": 2080
-        },
-        {
-          "id": 116,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 544,
-          "y": 3392
-        },
-        {
-          "id": 117,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 672,
-          "y": 3392
-        },
-        {
-          "id": 118,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1120,
-          "y": 3392
-        },
-        {
-          "id": 119,
-          "name": "dresser",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 544,
-          "y": 3744
-        },
-        {
-          "id": 120,
-          "name": "dresser",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1120,
-          "y": 3744
-        },
-        {
-          "id": 121,
-          "name": "table",
+          "name": "bed",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
           "x": 800,
-          "y": 3552
+          "y": 4528
         },
         {
-          "id": 122,
-          "name": "sofa",
+          "id": 116,
+          "name": "dresser",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 1760,
-          "y": 3456
+          "x": 1152,
+          "y": 4528
         },
         {
-          "id": 123,
-          "name": "sofa",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2304,
-          "y": 3456
-        },
-        {
-          "id": 124,
-          "name": "tv",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2048,
-          "y": 3712
-        },
-        {
-          "id": 125,
-          "name": "round_table",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2112,
-          "y": 3488
-        },
-        {
-          "id": 126,
-          "name": "plant",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2656,
-          "y": 3808
-        },
-        {
-          "id": 127,
-          "name": "bookshelf",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1664,
-          "y": 3744
-        },
-        {
-          "id": 128,
+          "id": 117,
           "name": "table",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 864,
-          "y": 4640
+          "x": 960,
+          "y": 4784
+        },
+        {
+          "id": 118,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 800,
+          "y": 4912
+        },
+        {
+          "id": 119,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1120,
+          "y": 4912
+        },
+        {
+          "id": 120,
+          "name": "plant",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 800,
+          "y": 5264
+        },
+        {
+          "id": 121,
+          "name": "sofa",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1440,
+          "y": 4528
+        },
+        {
+          "id": 122,
+          "name": "tv",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1760,
+          "y": 4528
+        },
+        {
+          "id": 123,
+          "name": "round_table",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1600,
+          "y": 4784
+        },
+        {
+          "id": 124,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1440,
+          "y": 4912
+        },
+        {
+          "id": 125,
+          "name": "chair",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1760,
+          "y": 4912
+        },
+        {
+          "id": 126,
+          "name": "bookshelf",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 1600,
+          "y": 5264
+        },
+        {
+          "id": 127,
+          "name": "bed",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2160,
+          "y": 4528
+        },
+        {
+          "id": 128,
+          "name": "dresser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "height": 0,
+          "x": 2480,
+          "y": 4528
         },
         {
           "id": 129,
@@ -40978,107 +41450,41 @@
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2048,
-          "y": 4640
+          "x": 2320,
+          "y": 4784
         },
         {
           "id": 130,
-          "name": "bookshelf",
+          "name": "chair",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 736,
-          "y": 5120
+          "x": 2160,
+          "y": 4912
         },
         {
           "id": 131,
-          "name": "bookshelf",
+          "name": "chair",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 2304,
-          "y": 5120
+          "x": 2480,
+          "y": 4912
         },
         {
           "id": 132,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1024,
-          "y": 4896
-        },
-        {
-          "id": 133,
-          "name": "barrel",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2112,
-          "y": 4896
-        },
-        {
-          "id": 134,
-          "name": "round_table",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1504,
-          "y": 4640
-        },
-        {
-          "id": 135,
-          "name": "chair",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1472,
-          "y": 4832
-        },
-        {
-          "id": 136,
-          "name": "chair",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 1760,
-          "y": 4832
-        },
-        {
-          "id": 137,
           "name": "plant",
           "rotation": 0,
           "type": "",
           "visible": true,
           "width": 0,
           "height": 0,
-          "x": 800,
-          "y": 4576
-        },
-        {
-          "id": 138,
-          "name": "plant",
-          "rotation": 0,
-          "type": "",
-          "visible": true,
-          "width": 0,
-          "height": 0,
-          "x": 2400,
-          "y": 5312
+          "x": 2480,
+          "y": 5264
         }
       ],
       "opacity": 1,
@@ -61102,7 +61508,7 @@
     }
   ],
   "nextlayerid": 5,
-  "nextobjectid": 164,
+  "nextobjectid": 133,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.7.1",

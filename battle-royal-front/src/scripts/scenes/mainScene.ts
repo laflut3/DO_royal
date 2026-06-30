@@ -10,6 +10,7 @@ import BattleRoyalPlayer from '../objects/battleRoyalPlayer'
 import FrontConf from '../conf'
 import FieldOfVision from '../gameCore/fieldOfVision'
 import GameMenu from '../gameCore/gameMenu'
+import { DEFAULT_MAP_ID, getMapDefinition } from '../gameCore/mapCatalog'
 import {
   CONTROL_ACTIONS,
   ControlSettings,
@@ -44,6 +45,7 @@ export default class MainScene extends Phaser.Scene {
   roomObjectGroup: GameObjectsGroup
   playerName: string
   gameUuid : string
+  mapId : string
   gameOwner : Boolean
   isCreate : boolean
   frontConf: FrontConf
@@ -93,6 +95,7 @@ export default class MainScene extends Phaser.Scene {
   init(data: object) {
     this.playerName = data["pseudo"];
     this.gameUuid = data["gameUuid"];
+    this.mapId = data["mapId"] || DEFAULT_MAP_ID;
     this.gameOwner = data["gameOwner"];
     this.playerSkinTint = data["skinTint"] || 0xffffff;
     this.playerAtlas = data["playerAtlas"] || "misa";
@@ -100,7 +103,8 @@ export default class MainScene extends Phaser.Scene {
 
   create() {
     // Create map
-    this.map = new GameMap(this, "map_fest_room", ["build_atlas", "indoor1", "indoor2", "indoor3"]);
+    const mapDefinition = getMapDefinition(this.mapId);
+    this.map = new GameMap(this, mapDefinition.mapKey, mapDefinition.tileSets);
 
     // Create objects
     this.gameObjectGroup = new GameObjectsGroup(this, this.map.tileMap, "fest_room_prop_atlas");
@@ -240,7 +244,6 @@ export default class MainScene extends Phaser.Scene {
     if (nextStatus === GameStatus.STARTING) {
       this.participatesInRound = true;
       this.closePauseMenu();
-      this.player.reviveAtSpawn();
       this.resetBattleRound();
     } else if (nextStatus === GameStatus.PLAYING && previousStatus === GameStatus.LOBBY) {
       this.participatesInRound = false;
@@ -599,10 +602,6 @@ export default class MainScene extends Phaser.Scene {
 
   updateRemotePlayerVisibility() {
     this.multiPlayers.playersMulti.forEach((player: Player) => {
-      if (this.player.isAlive && !player.isAlive) {
-        player.setVisible(false);
-        return;
-      }
       player.setVisible(true);
       player.setAlpha(player.isAlive ? 1 : 0.45);
       player.updateHud();

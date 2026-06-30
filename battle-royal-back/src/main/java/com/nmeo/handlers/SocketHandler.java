@@ -61,7 +61,11 @@ public class SocketHandler {
                     broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
                     break;
                 case NEW_GAME:
-                    gameService.createGame(newMessage.getGameId(), newMessage.getGameName());
+                    gameService.createGame(
+                            newMessage.getGameId(),
+                            newMessage.getGameName(),
+                            newMessage.getMapId(),
+                            newMessage.getMapName());
                     ctx.send(WebSocketMessage.ok());
                     break;
                 case LIST_GAME:

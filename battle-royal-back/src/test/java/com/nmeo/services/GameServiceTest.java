@@ -25,6 +25,17 @@ public class GameServiceTest {
     }
 
     @Test
+    public void shouldKeepSelectedMapInListedGame() {
+        GameService gameService = new GameService();
+        UUID gameId = UUID.randomUUID();
+
+        gameService.createGame(gameId, "Game1", "warehouse", "Depot Industriel");
+
+        assertEquals("warehouse", gameService.listGames().get(0).getMapId());
+        assertEquals("Depot Industriel", gameService.listGames().get(0).getMapName());
+    }
+
+    @Test
     public void shouldFinishPlayingGameWhenOnlyOnePlayerIsAlive() {
         GameService gameService = new GameService();
         PlayerService playerService = new PlayerService(gameService);

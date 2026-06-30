@@ -2,6 +2,13 @@ import MenuScene from "../scenes/menuScene";
 import FrontConf from "../conf";
 import { KeyWords, MessageType } from "./backEndWebSocket"
 
+export interface ServerListEntry {
+    gameId: string
+    gameName: string
+    mapId: string
+    mapName: string
+}
+
 export default class ListGamesWebSocket {
     webSocket : WebSocket
     uuid : string
@@ -25,9 +32,14 @@ export default class ListGamesWebSocket {
         this.webSocket.onmessage = (ev: MessageEvent) =>  {
             let message = JSON.parse(ev.data);
             if(message[KeyWords.MESSAGE_TYPE] === MessageType.LIST_GAME) {
-                let serverList =  new Map<string, string>();
+                let serverList =  new Array<ServerListEntry>();
                 message["gamelist"].forEach( element => {
-                    serverList.set(element[KeyWords.GAME_NAME], element[KeyWords.GAME_ID]);
+                    serverList.push({
+                        gameId: element[KeyWords.GAME_ID],
+                        gameName: element[KeyWords.GAME_NAME],
+                        mapId: element[KeyWords.MAP_ID],
+                        mapName: element[KeyWords.MAP_NAME]
+                    });
                 });
                 this.menuScene.loadServerList(serverList);
             } else if(message["status"] === "OK" && this.onCreateSuccess !== undefined) {
@@ -57,7 +69,7 @@ export default class ListGamesWebSocket {
         this.sendMessage(message);
     }
 
-    createNewServer(serverName : string, gameUuid : string, onSuccess : () => void, onError : (errorMessage: string) => void) {
+    createNewServer(serverName : string, gameUuid : string, mapId : string, mapName : string, onSuccess : () => void, onError : (errorMessage: string) => void) {
         this.onCreateSuccess = onSuccess;
         this.onCreateError = onError;
         let message = {};
@@ -65,6 +77,8 @@ export default class ListGamesWebSocket {
         message[KeyWords.MESSAGE_TYPE] = MessageType.NEW_GAME;
         message[KeyWords.GAME_ID] = gameUuid;
         message[KeyWords.GAME_NAME] = serverName;
+        message[KeyWords.MAP_ID] = mapId;
+        message[KeyWords.MAP_NAME] = mapName;
         this.sendMessage(message);
     }
 

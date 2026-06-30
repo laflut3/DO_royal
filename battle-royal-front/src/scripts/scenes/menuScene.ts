@@ -1,7 +1,8 @@
 import { Physics } from "phaser";
 import FrontConf from "../conf";
 
-import ListGamesWebSocket from "../network/listGameWebSocket"
+import { DEFAULT_MAP_ID, MAP_CATALOG, getMapDefinition } from "../gameCore/mapCatalog"
+import ListGamesWebSocket, { ServerListEntry } from "../network/listGameWebSocket"
 import {
     CONTROL_ACTIONS,
     ControlSettings,
@@ -19,19 +20,24 @@ interface SkinOption {
 }
 
 export default class MenuScene extends Phaser.Scene {
-    serverList : Map<string, string>
+    serverList : Array<ServerListEntry>
     graphicServerList : Array<Phaser.GameObjects.Text>
     graphicServerRows : Array<Phaser.GameObjects.Rectangle>
     selectedServer : string | undefined
+    selectedServerMapId : string | undefined
+    selectedServerMapName : string | undefined
     webSocket : ListGamesWebSocket
     frontConf : FrontConf
     pseudoText : Phaser.GameObjects.Text
     textJoin : Phaser.GameObjects.Text
     serverNameText : Phaser.GameObjects.Text
     selectedSkinIndex : number
+    selectedMapIndex : number
     skinPreview : Phaser.GameObjects.Sprite
     skinNameText : Phaser.GameObjects.Text
     skinDescriptionText : Phaser.GameObjects.Text
+    mapNameText : Phaser.GameObjects.Text
+    mapDescriptionText : Phaser.GameObjects.Text
     skinOptions : Array<SkinOption>
     animatedTiles : Array<Phaser.GameObjects.TileSprite>
     controlSettings : ControlSettings
@@ -53,6 +59,7 @@ export default class MenuScene extends Phaser.Scene {
         this.waitingControl = null;
         this.activeTextInputDom = null;
         this.selectedSkinIndex = 0;
+        this.selectedMapIndex = 0;
         this.animatedTiles = new Array<Phaser.GameObjects.TileSprite>();
         this.skinOptions = [
             { name: "Misa", atlas: "misa", description: "Balanced survivor" },
@@ -179,26 +186,53 @@ export default class MenuScene extends Phaser.Scene {
         let serverListBack = this.add.sprite(this.frontConf.width/2 - 300, this.frontConf.height/2 + 120, 'menuButton', 'server-list');
         serverListBack.scale = 2.5
 
-        this.serverList = new Map<string, string>();
+        this.serverList = new Array<ServerListEntry>();
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
         this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
 
         /* Create Section */
-        this.add.rectangle(this.frontConf.width/2 + 300, this.frontConf.height/2 + 85, 390, 210, 0x0d1b24, 0.86).setStrokeStyle(2, 0xf4d35e, 0.45);
-        let textCreateSection = this.add.text(this.frontConf.width/2 + 300, this.frontConf.height / 2, "Create a server");
+        this.add.rectangle(this.frontConf.width/2 + 300, this.frontConf.height/2 + 100, 390, 270, 0x0d1b24, 0.86).setStrokeStyle(2, 0xf4d35e, 0.45);
+        let textCreateSection = this.add.text(this.frontConf.width/2 + 300, this.frontConf.height / 2 - 25, "Create a server");
         textCreateSection.setOrigin(0.5, 0.5);
         textCreateSection.setFontSize(25);
         textCreateSection.setColor("#f6fbff");
 
-        var serverNameInput = this.add.sprite(this.frontConf.width/2 +300, this.frontConf.height/2 + 50, 'menuButton', 'edit-box');
+        var serverNameInput = this.add.sprite(this.frontConf.width/2 +300, this.frontConf.height/2 + 20, 'menuButton', 'edit-box');
         serverNameInput.setOrigin(0.5, 0.5);
-        this.serverNameText = this.add.text(this.frontConf.width/2 +300, this.frontConf.height/2 + 50, "Enter server name");
+        this.serverNameText = this.add.text(this.frontConf.width/2 +300, this.frontConf.height/2 + 20, "Enter server name");
         this.serverNameText.setOrigin(0.5, 0.5);
         this.serverNameText.setColor("#f6fbff");
         this.serverNameText.setInteractive();
         this.serverNameText.on('pointerdown', () => this.openTextInput(this.serverNameText, "Enter server name"));
 
-        let buttonCreate = this.add.sprite(this.frontConf.width/2 + 300, this.frontConf.height/2+ 100, 'menuButton', 'button1');
+        let mapLabel = this.add.text(this.frontConf.width/2 + 300, this.frontConf.height/2 + 62, "Map");
+        mapLabel.setOrigin(0.5, 0.5);
+        mapLabel.setFontSize(16);
+        mapLabel.setColor("#b7d8de");
+        let previousMap = this.add.text(this.frontConf.width/2 + 135, this.frontConf.height/2 + 92, "<");
+        previousMap.setOrigin(0.5, 0.5);
+        previousMap.setFontSize(30);
+        previousMap.setColor("#f4d35e");
+        previousMap.setInteractive();
+        previousMap.on('clicked', () => this.changeMap(-1));
+        let nextMap = this.add.text(this.frontConf.width/2 + 465, this.frontConf.height/2 + 92, ">");
+        nextMap.setOrigin(0.5, 0.5);
+        nextMap.setFontSize(30);
+        nextMap.setColor("#f4d35e");
+        nextMap.setInteractive();
+        nextMap.on('clicked', () => this.changeMap(1));
+        this.mapNameText = this.add.text(this.frontConf.width/2 + 300, this.frontConf.height/2 + 84, "");
+        this.mapNameText.setOrigin(0.5, 0.5);
+        this.mapNameText.setFontSize(20);
+        this.mapNameText.setColor("#f6fbff");
+        this.mapDescriptionText = this.add.text(this.frontConf.width/2 + 300, this.frontConf.height/2 + 112, "");
+        this.mapDescriptionText.setOrigin(0.5, 0.5);
+        this.mapDescriptionText.setFontSize(12);
+        this.mapDescriptionText.setColor("#8fb7bf");
+        this.mapDescriptionText.setWordWrapWidth(300);
+        this.updateMapPreview();
+
+        let buttonCreate = this.add.sprite(this.frontConf.width/2 + 300, this.frontConf.height/2+ 180, 'menuButton', 'button1');
         buttonCreate.setInteractive();
         buttonCreate.on('clicked', (button : Physics.Arcade.Sprite) => {
             buttonCreate.setFrame("button1-clicked");
@@ -208,7 +242,7 @@ export default class MenuScene extends Phaser.Scene {
             buttonCreate.setFrame("button1");
         });
 
-        let textCreate = this.add.text(this.frontConf.width/2 +300, this.frontConf.height/2 + 100, "Create Server");
+        let textCreate = this.add.text(this.frontConf.width/2 +300, this.frontConf.height/2 + 180, "Create Server");
         textCreate.setOrigin(0.5, 0.5);
         textCreate.setColor("#f6fbff");
 
@@ -273,10 +307,13 @@ export default class MenuScene extends Phaser.Scene {
         }
         console.log("Creating a new game " + this.serverNameText.text);
         var gameUuid = Phaser.Utils.String.UUID();
+        const selectedMap = this.currentMapDefinition();
         this.webSocket.createNewServer(
             this.serverNameText.text,
             gameUuid,
-            () => this.goToMainScene({ pseudo: this.pseudoText.text, gameUuid : gameUuid, gameOwner : true, playerAtlas: this.currentSkinAtlas(), skinTint: 0xffffff }),
+            selectedMap.id,
+            selectedMap.name,
+            () => this.goToMainScene({ pseudo: this.pseudoText.text, gameUuid : gameUuid, gameOwner : true, playerAtlas: this.currentSkinAtlas(), skinTint: 0xffffff, mapId: selectedMap.id }),
             (errorMessage: string) => {
                 console.log("Game creation failed: " + errorMessage);
                 this.serverNameText.setColor("red");
@@ -295,7 +332,7 @@ export default class MenuScene extends Phaser.Scene {
             this.textJoin.setColor("red");
             return;
         }
-        this.goToMainScene({ pseudo: this.pseudoText.text, gameUuid : this.selectedServer, gameOwner : false, playerAtlas: this.currentSkinAtlas(), skinTint: 0xffffff });
+        this.goToMainScene({ pseudo: this.pseudoText.text, gameUuid : this.selectedServer, gameOwner : false, playerAtlas: this.currentSkinAtlas(), skinTint: 0xffffff, mapId: this.selectedServerMapId || DEFAULT_MAP_ID });
     }
 
     changeSkin(direction : number) {
@@ -313,6 +350,21 @@ export default class MenuScene extends Phaser.Scene {
 
     currentSkinAtlas() : string {
         return this.skinOptions[this.selectedSkinIndex].atlas;
+    }
+
+    changeMap(direction : number) {
+        this.selectedMapIndex = (this.selectedMapIndex + direction + MAP_CATALOG.length) % MAP_CATALOG.length;
+        this.updateMapPreview();
+    }
+
+    updateMapPreview() {
+        const mapDefinition = this.currentMapDefinition();
+        this.mapNameText.setText(mapDefinition.name);
+        this.mapDescriptionText.setText(mapDefinition.description);
+    }
+
+    currentMapDefinition() {
+        return MAP_CATALOG[this.selectedMapIndex];
     }
 
     openTextInput(textObject: Phaser.GameObjects.Text, placeholder: string) {
@@ -486,21 +538,26 @@ export default class MenuScene extends Phaser.Scene {
         this.tweens.add({ targets: scanLine, y: this.frontConf.height - 20, duration: 4200, repeat: -1, ease: "Sine.easeInOut" });
     }
 
-    loadServerList(serverList : Map<string, string>) {
+    loadServerList(serverList : Array<ServerListEntry>) {
         this.graphicServerList.forEach( (textElement : Phaser.GameObjects.Text) => { textElement.destroy()});
         this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.destroy()});
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
         this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
         this.serverList = serverList;
         this.selectedServer = undefined;
+        this.selectedServerMapId = undefined;
+        this.selectedServerMapName = undefined;
         this.textJoin.setColor("#f6fbff");
         let i = 15;
-        this.serverList.forEach( ( value : string, key : string) => {
+        this.serverList.forEach( ( server : ServerListEntry) => {
             const rowY = this.frontConf.height/2 + 35 + i;
             let rowServer = this.add.rectangle(this.frontConf.width/2 - 300, rowY, 330, 26, 0x122b36, 0.01);
             rowServer.setInteractive({ useHandCursor: true });
-            let textServer = this.add.text(this.frontConf.width/2 - 300, rowY , key);
+            const mapDefinition = getMapDefinition(server.mapId);
+            const displayedMapName = server.mapName || mapDefinition.name;
+            let textServer = this.add.text(this.frontConf.width/2 - 300, rowY , server.gameName + " (" + displayedMapName + ")");
             textServer.setOrigin(0.5, 0.5);
+            textServer.setFontSize(14);
             textServer.setInteractive({ useHandCursor: true });
 
             const selectServer = () => {
@@ -508,7 +565,9 @@ export default class MenuScene extends Phaser.Scene {
                 this.graphicServerRows.forEach( (rowElement : Phaser.GameObjects.Rectangle) => { rowElement.setFillStyle(0x122b36, 0.01);});
                 textServer.setColor("red");
                 rowServer.setFillStyle(0x244c5a, 0.75);
-                this.selectedServer = value;
+                this.selectedServer = server.gameId;
+                this.selectedServerMapId = server.mapId || DEFAULT_MAP_ID;
+                this.selectedServerMapName = displayedMapName;
                 this.textJoin.setColor("#f6fbff");
             };
             textServer.on('clicked', selectServer);

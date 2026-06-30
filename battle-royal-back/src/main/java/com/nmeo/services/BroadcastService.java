@@ -72,6 +72,7 @@ public class BroadcastService {
                     gameService.getGameStatus(gameId),
                     gameService.getWinnerName(gameId),
                     gameService.getOwnerPlayerUuid(gameId),
+                    gameService.getPlayerUuids(gameId),
                     playerService.getPlayersVisibleBy(gameId, socketUuid));
             ctx.send(message);
         });
