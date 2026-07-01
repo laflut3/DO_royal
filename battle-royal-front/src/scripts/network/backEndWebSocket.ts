@@ -133,6 +133,8 @@ export default class BackEndWebSocket {
                 this.destroyBulletHandler(message[KeyWords.BULLET_INFO]);
             } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.CHAT_MESSAGE) {
                 this.chatMessageHandler(message);
+            } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.PLAYER_MOVED) {
+                this.playerMovedHandler(message[KeyWords.PLAYER_INFO]);
             }
         };
 
@@ -218,48 +220,7 @@ export default class BackEndWebSocket {
         let updatedPlayers : Array<string> = new Array<string>();
         messagePlayers.forEach( element => {
             updatedPlayers.push(element["uuid"]);
-            let playerMulti : PlayerInterface | undefined = this.otherPlayerMap.get(element["uuid"]);
-            if(playerMulti != undefined) {
-                // Update existing player
-                playerMulti.x = element["x"];
-                playerMulti.y = element["y"];
-                playerMulti.name = element["name"];
-                playerMulti.velocityX = element["velocityX"];
-                playerMulti.velocityY = element["velocityY"];
-                playerMulti.atlas = element["atlas"];
-                playerMulti.direction = element["direction"];
-                playerMulti.frame = element["frame"];
-                playerMulti.width = element["width"];
-                playerMulti.height = element["height"];
-                playerMulti.isAlive = element["isAlive"];
-                playerMulti.health = element["health"];
-                playerMulti.maxHealth = element["maxHealth"];
-                playerMulti.shield = element["shield"];
-                playerMulti.maxShield = element["maxShield"];
-                playerMulti.skinTint = element["skinTint"];
-            } else {
-                // Create new Player
-                let playerMulti : PlayerInterface = {
-                    uuid : element["uuid"],
-                    name : element["name"],
-                    x : element["x"],
-                    y : element["y"],
-                    velocityX : element["velocityX"],
-                    velocityY : element["velocityY"],
-                    atlas : element["atlas"],
-                    direction : element["direction"],
-                    frame : element["frame"],
-                    width : element["width"],
-                    height : element["height"],
-                    isAlive : element["isAlive"],
-                    health : element["health"],
-                    maxHealth : element["maxHealth"],
-                    shield : element["shield"],
-                    maxShield : element["maxShield"],
-                    skinTint : element["skinTint"]
-                };
-                this.otherPlayerMap.set(playerMulti.uuid, playerMulti);
-            }
+            this.upsertRemotePlayer(element);
         });
         // Delete disconnected players -> players witch were not updated
         if(this.otherPlayerMap.size != updatedPlayers.length) {
@@ -271,6 +232,59 @@ export default class BackEndWebSocket {
         }
         // Update scene
         this.multiPlayer.updateFromServer(this.otherPlayerMap);
+    }
+
+    playerMovedHandler(messagePlayer: any) {
+        if(messagePlayer === undefined || messagePlayer === null) {
+            return;
+        }
+        this.upsertRemotePlayer(messagePlayer);
+        this.multiPlayer.updateFromServer(this.otherPlayerMap);
+    }
+
+    private upsertRemotePlayer(element: any) {
+        let playerMulti : PlayerInterface | undefined = this.otherPlayerMap.get(element["uuid"]);
+        if(playerMulti != undefined) {
+            // Update existing player
+            playerMulti.x = element["x"];
+            playerMulti.y = element["y"];
+            playerMulti.name = element["name"];
+            playerMulti.velocityX = element["velocityX"];
+            playerMulti.velocityY = element["velocityY"];
+            playerMulti.atlas = element["atlas"];
+            playerMulti.direction = element["direction"];
+            playerMulti.frame = element["frame"];
+            playerMulti.width = element["width"];
+            playerMulti.height = element["height"];
+            playerMulti.isAlive = element["isAlive"];
+            playerMulti.health = element["health"];
+            playerMulti.maxHealth = element["maxHealth"];
+            playerMulti.shield = element["shield"];
+            playerMulti.maxShield = element["maxShield"];
+            playerMulti.skinTint = element["skinTint"];
+        } else {
+            // Create new Player
+            let playerMulti : PlayerInterface = {
+                uuid : element["uuid"],
+                name : element["name"],
+                x : element["x"],
+                y : element["y"],
+                velocityX : element["velocityX"],
+                velocityY : element["velocityY"],
+                atlas : element["atlas"],
+                direction : element["direction"],
+                frame : element["frame"],
+                width : element["width"],
+                height : element["height"],
+                isAlive : element["isAlive"],
+                health : element["health"],
+                maxHealth : element["maxHealth"],
+                shield : element["shield"],
+                maxShield : element["maxShield"],
+                skinTint : element["skinTint"]
+            };
+            this.otherPlayerMap.set(playerMulti.uuid, playerMulti);
+        }
     }
 
     registerBullet(bullet : Bullet) {

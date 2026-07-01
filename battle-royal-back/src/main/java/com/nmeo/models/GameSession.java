@@ -14,6 +14,7 @@ public class GameSession {
     private final Game game;
     private final Map<String, Player> players = new ConcurrentHashMap<>();
     private final Map<String, Bullet> bullets = new ConcurrentHashMap<>();
+
     private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock(true);
 
     @Setter

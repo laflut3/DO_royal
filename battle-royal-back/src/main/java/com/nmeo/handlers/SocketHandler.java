@@ -85,8 +85,13 @@ public class SocketHandler {
                     playerService.updatePlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
                     if (Boolean.FALSE.equals(newMessage.getPlayer().getIsAlive()) || newMessage.getPlayer().getHealth() == 0) {
                         gameService.updateFinishedState(newMessage.getGameId());
+                        broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
+                    } else {
+                        broadcastService.broadcastMessageInGameExcept(
+                                newMessage.getGameId(),
+                                newMessage.getSocketUuid(),
+                                WebSocketMessage.playerMoved(newMessage.getGameId(), newMessage.getPlayer()));
                     }
-                    broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
                     break;
                 case PLAYER_DESTROY:
                     playerService.updatePlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
