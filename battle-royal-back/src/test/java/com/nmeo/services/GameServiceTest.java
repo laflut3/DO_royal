@@ -97,6 +97,21 @@ public class GameServiceTest {
     }
 
     @Test
+    public void shouldReturnCopiedPlayersInGameStateSnapshot() {
+        GameService gameService = new GameService();
+        PlayerService playerService = new PlayerService(gameService);
+        UUID gameId = UUID.randomUUID();
+
+        gameService.createGame(gameId, "Game1");
+        playerService.createPlayer(UUID.randomUUID(), gameId, player("player-1", "Player1", true));
+
+        Player snapshotPlayer = gameService.snapshotGameState(gameId).players().get(0);
+        snapshotPlayer.setName("Mutated outside lock");
+
+        assertEquals("Player1", gameService.getPlayer(gameId, "player-1").getName());
+    }
+
+    @Test
     public void shouldAssignFirstPlayerAsOwnerAndTransferWhenOwnerLeaves() {
         GameService gameService = new GameService();
         PlayerService playerService = new PlayerService(gameService);

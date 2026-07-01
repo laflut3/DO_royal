@@ -29,4 +29,29 @@ public class Player {
     private Integer maxShield;
     private Integer skinTint;
     private Long accountId;
+
+    public static Player copyOf(Player player) {
+        if (player == null) {
+            return null;
+        }
+        return new Player(
+                player.getUuid(),
+                player.getName(),
+                player.getX(),
+                player.getY(),
+                player.getVelocityX(),
+                player.getVelocityY(),
+                player.getDirection(),
+                player.getAtlas(),
+                player.getFrame(),
+                player.getWidth(),
+                player.getHeight(),
+                player.getIsAlive(),
+                player.getHealth(),
+                player.getMaxHealth(),
+                player.getShield(),
+                player.getMaxShield(),
+                player.getSkinTint(),
+                player.getAccountId());
+    }
 }

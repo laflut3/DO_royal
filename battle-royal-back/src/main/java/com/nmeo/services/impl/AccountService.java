@@ -78,14 +78,22 @@ public class AccountService {
 
     public void rewardFinishedGame(GameSession session) {
         Set<Long> rewardedAccounts = new LinkedHashSet<>();
-        String winnerName = session.getWinnerName();
-        String rewardKey = session.getGameId() + ":round:" + session.getRoundNumber();
-        for (Player player : session.getPlayers().values()) {
+        GameService.GameStateSnapshot gameState = session.readState(() -> new GameService.GameStateSnapshot(
+                session.getStatus(),
+                session.getWinnerName(),
+                session.getOwnerPlayerUuid(),
+                session.getPlayers().keySet().stream().sorted().toList(),
+                session.getRoundNumber(),
+                session.getPlayers().values().stream()
+                        .map(Player::copyOf)
+                        .toList()));
+        String rewardKey = session.getGameId() + ":round:" + gameState.roundNumber();
+        for (Player player : gameState.players()) {
             Long accountId = player.getAccountId();
             if (accountId == null || !rewardedAccounts.add(accountId)) {
                 continue;
             }
-            int reward = player.getName() != null && player.getName().equals(winnerName)
+            int reward = player.getName() != null && player.getName().equals(gameState.winnerName())
                     ? AccountCatalog.WIN_REWARD
                     : AccountCatalog.PARTICIPATION_REWARD;
             addCoins(accountId, rewardKey, reward);

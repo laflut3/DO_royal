@@ -83,6 +83,24 @@ public class PlayerServiceTest {
     }
 
     @Test
+    public void shouldReturnCopiedVisiblePlayers() {
+        GameService gameService = new GameService();
+        PlayerService playerService = new PlayerService(gameService);
+        UUID gameId = UUID.randomUUID();
+        UUID firstSocket = UUID.randomUUID();
+        UUID secondSocket = UUID.randomUUID();
+
+        gameService.createGame(gameId, "Game1");
+        playerService.createPlayer(firstSocket, gameId, player("player-1"));
+        playerService.createPlayer(secondSocket, gameId, player("player-2"));
+
+        Player visiblePlayer = playerService.getPlayersVisibleBy(gameId, firstSocket).get(0);
+        visiblePlayer.setName("Mutated outside lock");
+
+        assertEquals("player-2", gameService.getPlayer(gameId, "player-2").getName());
+    }
+
+    @Test
     public void shouldSerializeMessageTypeAsFrontEndNumber() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of("player-1"), 1, List.of());

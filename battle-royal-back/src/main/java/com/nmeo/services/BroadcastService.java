@@ -8,7 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.nmeo.dto.WebSocketMessage;
+import com.nmeo.models.Player;
 import com.nmeo.services.impl.GameService;
+import com.nmeo.services.impl.GameService.GameStateSnapshot;
 
 import io.javalin.websocket.WsContext;
 import lombok.AllArgsConstructor;
@@ -70,19 +72,21 @@ public class BroadcastService {
     }
 
     public void broadcastGameState(UUID gameId, IPlayerService playerService, GameService gameService) {
+        GameStateSnapshot gameState = gameService.snapshotGameState(gameId);
         socketSnapshot(gameId).forEach(socketUuid -> {
             WsContext ctx = sessionsBySocket.get(socketUuid);
             if (ctx == null) {
                 return;
             }
+            String currentPlayerUuid = playerService.getPlayerUuidForSocket(socketUuid);
             WebSocketMessage message = WebSocketMessage.gameState(
                     gameId,
-                    gameService.getGameStatus(gameId),
-                    gameService.getWinnerName(gameId),
-                    gameService.getOwnerPlayerUuid(gameId),
-                    gameService.getPlayerUuids(gameId),
-                    gameService.getRoundNumber(gameId),
-                    playerService.getPlayersVisibleBy(gameId, socketUuid));
+                    gameState.status(),
+                    gameState.winnerName(),
+                    gameState.ownerPlayerUuid(),
+                    gameState.playerUuids(),
+                    gameState.roundNumber(),
+                    playersVisibleBy(gameState.players(), currentPlayerUuid));
             ctx.send(message);
         });
     }
@@ -125,6 +129,16 @@ public class BroadcastService {
         } finally {
             registryLock.readLock().unlock();
         }
+    }
+
+    private List<Player> playersVisibleBy(List<Player> players, String currentPlayerUuid) {
+        if (currentPlayerUuid == null) {
+            return List.of();
+        }
+        return players.stream()
+                .filter(player -> !currentPlayerUuid.equals(player.getUuid()))
+                .map(Player::copyOf)
+                .toList();
     }
 
     @Getter

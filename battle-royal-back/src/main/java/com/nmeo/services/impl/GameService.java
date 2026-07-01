@@ -84,6 +84,19 @@ public class GameService {
                 .orElse(List.of());
     }
 
+    public GameStateSnapshot snapshotGameState(UUID gameId) {
+        GameSession session = sessionOrThrow(gameId);
+        return session.readState(() -> new GameStateSnapshot(
+                session.getStatus(),
+                session.getWinnerName(),
+                session.getOwnerPlayerUuid(),
+                session.getPlayers().keySet().stream().sorted().toList(),
+                session.getRoundNumber(),
+                session.getPlayers().values().stream()
+                        .map(Player::copyOf)
+                        .toList()));
+    }
+
     public void assignOwnerIfMissing(UUID gameId, String playerUuid) {
         GameSession session = sessionOrThrow(gameId);
         session.writeState(() -> {
@@ -142,7 +155,7 @@ public class GameService {
             return null;
         }
         return getSession(gameId)
-                .map(session -> session.readState(() -> session.getPlayers().get(playerUuid)))
+                .map(session -> session.readState(() -> Player.copyOf(session.getPlayers().get(playerUuid))))
                 .orElse(null);
     }
 
@@ -195,5 +208,14 @@ public class GameService {
     private GameSession sessionOrThrow(UUID gameId) {
         return getSession(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("game not found"));
+    }
+
+    public record GameStateSnapshot(
+            GameStatus status,
+            String winnerName,
+            String ownerPlayerUuid,
+            List<String> playerUuids,
+            int roundNumber,
+            List<Player> players) {
     }
 }

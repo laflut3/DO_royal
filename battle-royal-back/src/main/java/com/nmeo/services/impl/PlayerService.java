@@ -126,6 +126,7 @@ public class PlayerService implements IPlayerService {
 
         return session.readState(() -> session.getPlayers().values().stream()
                 .filter(player -> !player.getUuid().equals(currentPlayer.getPlayerUuid()))
+                .map(Player::copyOf)
                 .toList());
     }
 
