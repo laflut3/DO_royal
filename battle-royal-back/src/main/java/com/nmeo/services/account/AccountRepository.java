@@ -66,6 +66,14 @@ public class AccountRepository {
         return findById(accountId).orElseThrow();
     }
 
+    public void delete(long accountId) throws SQLException {
+        try (Connection connection = config.connection();
+             PreparedStatement statement = connection.prepareStatement("delete from accounts where id = ?")) {
+            statement.setLong(1, accountId);
+            statement.executeUpdate();
+        }
+    }
+
     public Account buySkin(Account account, String skin) throws SQLException {
         try (Connection connection = config.connection()) {
             connection.setAutoCommit(false);

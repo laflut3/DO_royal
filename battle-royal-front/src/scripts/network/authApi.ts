@@ -91,6 +91,16 @@ export default class AuthApi {
         return response.json();
     }
 
+    async deleteAccount(token: string) : Promise<void> {
+        const response = await fetch(this.baseUrl + "/auth/me", {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (!response.ok) {
+            throw new Error(await this.errorMessage(response));
+        }
+    }
+
     private async authRequest(path: string, username: string, password: string) : Promise<AuthSession> {
         const response = await fetch(this.baseUrl + path, {
             method: "POST",
