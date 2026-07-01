@@ -22,6 +22,9 @@ public class GameSession {
     @Setter
     private String ownerPlayerUuid;
 
+    @Setter
+    private int roundNumber = 0;
+
     public GameSession(Game game) {
         this.game = game;
     }

@@ -31,7 +31,8 @@ export interface PlayerInterface {
     maxHealth : number,
     shield : number,
     maxShield : number,
-    skinTint : number
+    skinTint : number,
+    accountId? : number
 }
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -62,6 +63,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     maxStamina : number
     lastStaminaUpdate : number
     skinTint : number
+    accountId? : number
     nameText : Phaser.GameObjects.Text
     shieldBarBackground : Phaser.GameObjects.Rectangle
     shieldBarFill : Phaser.GameObjects.Rectangle
@@ -186,8 +188,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.updateHud();
     }
 
-    goToSpawnPoint(spawnIndex?: number, playerCount?: number) {
-        this.reviveAtSpawn(spawnIndex, playerCount);
+    goToSpawnPoint(spawnIndex?: number, playerCount?: number, spawnSeed?: string) {
+        this.reviveAtSpawn(spawnIndex, playerCount, spawnSeed);
     }
 
     goToLobbyPoint() {
@@ -223,8 +225,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.updateHud();
     }
 
-    reviveAtSpawn(spawnIndex?: number, playerCount?: number) {
-        this.spawnPoint = this.pickSpawnPoint(this.spawnPoints, spawnIndex, playerCount);
+    reviveAtSpawn(spawnIndex?: number, playerCount?: number, spawnSeed?: string) {
+        this.spawnPoint = this.pickSpawnPoint(this.spawnPoints, spawnIndex, playerCount, spawnSeed);
         this.setPosition(this.spawnPoint.x, this.spawnPoint.y);
         this.health = this.maxHealth;
         this.shield = 0;
@@ -268,7 +270,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             maxHealth : this.maxHealth,
             shield : Math.ceil(this.shield),
             maxShield : this.maxShield,
-            skinTint : this.skinTint
+            skinTint : this.skinTint,
+            accountId : this.accountId
         }
         return returnValue;
     }
@@ -387,20 +390,41 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.staminaBarFill.width = 40 * staminaRatio;
     }
 
-    private pickSpawnPoint(spawnPoints: Array<Phaser.Math.Vector2>, spawnIndex?: number, playerCount?: number): Phaser.Math.Vector2 {
+    private pickSpawnPoint(spawnPoints: Array<Phaser.Math.Vector2>, spawnIndex?: number, playerCount?: number, spawnSeed?: string): Phaser.Math.Vector2 {
         if (spawnPoints.length === 0) {
             return new Phaser.Math.Vector2(this.lobbyPoint.x, this.lobbyPoint.y);
         }
-        if (spawnIndex !== undefined && playerCount !== undefined && spawnIndex >= 0 && playerCount > 0) {
-            const clampedPlayerCount = Math.min(playerCount, spawnPoints.length);
-            const spawnSlot = Math.min(
-                spawnPoints.length - 1,
-                Math.floor(spawnIndex * spawnPoints.length / clampedPlayerCount)
-            );
-            const spawnPoint = spawnPoints[spawnSlot];
+        if (spawnIndex !== undefined && playerCount !== undefined && spawnIndex >= 0 && playerCount > 0 && spawnSeed) {
+            const shuffledSpawnPoints = this.shuffleSpawnPoints(spawnPoints, spawnSeed);
+            const spawnPoint = shuffledSpawnPoints[spawnIndex % shuffledSpawnPoints.length];
             return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
         }
         const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
         return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
+    }
+
+    private shuffleSpawnPoints(spawnPoints: Array<Phaser.Math.Vector2>, seed: string): Array<Phaser.Math.Vector2> {
+        const shuffledSpawnPoints = [...spawnPoints];
+        const random = this.seededRandom(seed);
+        for (let index = shuffledSpawnPoints.length - 1; index > 0; index--) {
+            const targetIndex = Math.floor(random() * (index + 1));
+            [shuffledSpawnPoints[index], shuffledSpawnPoints[targetIndex]] = [shuffledSpawnPoints[targetIndex], shuffledSpawnPoints[index]];
+        }
+        return shuffledSpawnPoints;
+    }
+
+    private seededRandom(seed: string): () => number {
+        let state = 2166136261;
+        for (let index = 0; index < seed.length; index++) {
+            state ^= seed.charCodeAt(index);
+            state = Math.imul(state, 16777619);
+        }
+        return () => {
+            state += 0x6D2B79F5;
+            let value = state;
+            value = Math.imul(value ^ value >>> 15, value | 1);
+            value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+            return ((value ^ value >>> 14) >>> 0) / 4294967296;
+        };
     }
 }

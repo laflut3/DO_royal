@@ -48,6 +48,20 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8080"
+            - name: JDBC_DATABASE_URL
+              value: "jdbc:postgresql://do-royal-postgres:5432/{{ .Values.postgres.database }}"
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.secretName | quote }}
+                  key: {{ .Values.externalSecret.keys.postgresPassword | quote }}
+            - name: DO_ROYAL_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.secretName | quote }}
+                  key: {{ .Values.externalSecret.keys.jwtSecret | quote }}
           readinessProbe:
             tcpSocket:
               port: 8080

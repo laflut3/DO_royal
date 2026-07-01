@@ -32,11 +32,13 @@ export enum KeyWords {
     GAME_STATUS = "gameStatus",
     WINNER_NAME = "winnerName",
     OWNER_PLAYER_UUID = "ownerPlayerUuid",
+    ROUND_NUMBER = "roundNumber",
     CHAT_MESSAGE = "chatMessage",
     PLAYER_UUID = "playerUuid",
     PLAYER_NAME = "playerName",
     MAP_ID = "mapId",
-    MAP_NAME = "mapName"
+    MAP_NAME = "mapName",
+    AUTH_TOKEN = "authToken"
 }
 
 export enum GameStatus {
@@ -66,9 +68,11 @@ export default class BackEndWebSocket {
     ownerPlayerUuid : string
     isOwner : boolean
     playerUuids : Array<string>
+    roundNumber : number
+    authToken : string | null
 
 
-    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any) {
+    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any, authToken: string | null = null) {
 
         this.otherPlayerMap = new Map<string, PlayerInterface>();
         this.multiPlayer = multiPlayer;
@@ -87,6 +91,8 @@ export default class BackEndWebSocket {
         this.ownerPlayerUuid = "";
         this.isOwner = false;
         this.playerUuids = new Array<string>();
+        this.roundNumber = 0;
+        this.authToken = authToken;
 
         this.webSocket.onopen = (ev: Event) => {
             this.registerPlayer(player);
@@ -108,6 +114,7 @@ export default class BackEndWebSocket {
             if(message[KeyWords.MESSAGE_TYPE] === MessageType.GAME_STATE) {
                 this.multiPlayersPositionMessageHandler(message[KeyWords.PLAYERS_INFO]);
                 this.playerUuids = message[KeyWords.PLAYER_UUIDS] || this.playerUuids;
+                this.roundNumber = message[KeyWords.ROUND_NUMBER] || this.roundNumber;
                 this.gameStatusHandler(message[KeyWords.GAME_STATUS]);
                 this.ownerPlayerUuid = message[KeyWords.OWNER_PLAYER_UUID] || "";
                 this.isOwner = this.ownerPlayerUuid === this.currentPlayer.uuid;
@@ -138,6 +145,9 @@ export default class BackEndWebSocket {
         message[KeyWords.MESSAGE_TYPE] = MessageType.NEW_PLAYER;
         message[KeyWords.PLAYER_INFO] = jsonObject;
         message[KeyWords.GAME_ID] = this.gameUuid;
+        if(this.authToken !== null) {
+            message[KeyWords.AUTH_TOKEN] = this.authToken;
+        }
         this.webSocket.send(JSON.stringify(message));
     }
 
@@ -154,6 +164,20 @@ export default class BackEndWebSocket {
             this.webSocket.send(JSON.stringify(message));
             this.lastUpdateSent = performance.now();
         }
+    }
+
+    destroyPlayer(player : Player) {
+        if (this.webSocket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        let jsonObject : PlayerInterface = player.toJsonBackEnd();
+        let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
+        message[KeyWords.GAME_ID] = this.gameUuid;
+        message[KeyWords.MESSAGE_TYPE] = MessageType.PLAYER_DESTROY;
+        message[KeyWords.PLAYER_INFO] = jsonObject;
+        this.webSocket.send(JSON.stringify(message));
+        this.lastUpdateSent = performance.now();
     }
 
     multiPlayersPositionMessageHandler(messagePlayers: any) {
@@ -316,7 +340,8 @@ export default class BackEndWebSocket {
                         : [...this.playerUuids, this.currentPlayer.uuid].sort();
                     this.currentPlayer.goToSpawnPoint(
                         spawnOrder.indexOf(this.currentPlayer.uuid),
-                        spawnOrder.length
+                        spawnOrder.length,
+                        this.gameUuid + ":round:" + this.roundNumber + ":players:" + spawnOrder.join("|")
                     );
                 }
                 break;

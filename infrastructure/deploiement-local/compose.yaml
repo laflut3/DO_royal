@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    environment:
+      POSTGRES_DB: do_royal
+      POSTGRES_USER: do_royal
+      POSTGRES_PASSWORD: do_royal_local_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - do-royal-local
+
+  backend:
+    build:
+      context: ../../battle-royal-back
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../battle-royal-back/src
+        - action: rebuild
+          path: ../../battle-royal-back/pom.xml
+    environment:
+      SERVER_PORT: "8080"
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/do_royal
+      POSTGRES_USER: do_royal
+      POSTGRES_PASSWORD: do_royal_local_password
+      DO_ROYAL_JWT_SECRET: local-dev-secret-change-me
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - do-royal-local
+
+  frontend:
+    build:
+      context: ../../battle-royal-front
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../battle-royal-front/src
+        - action: rebuild
+          path: ../../battle-royal-front/assets
+        - action: rebuild
+          path: ../../battle-royal-front/package.json
+        - action: rebuild
+          path: ../../battle-royal-front/package-lock.json
+        - action: rebuild
+          path: ../../battle-royal-front/webpack
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+    networks:
+      - do-royal-local
+
+volumes:
+  postgres-data:
+
+networks:
+  do-royal-local:

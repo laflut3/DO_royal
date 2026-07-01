@@ -20,14 +20,25 @@ public class PlayerService implements IPlayerService {
     private static final double PLAYER_VISIBILITY_RANGE = TILE_SIZE * PLAYER_VISIBILITY_TILE_RANGE;
 
     private final GameService gameService;
+    private final AccountService accountService;
     private final Map<UUID, PlayerRegistration> registrationsBySocket = new ConcurrentHashMap<>();
+
+    public PlayerService(GameService gameService) {
+        this(gameService, null);
+    }
+
+    public void createPlayer(UUID socketUuid, UUID gameId, Player player, String authToken) {
+        Long accountId = resolveAccountId(authToken);
+        normalizePlayer(socketUuid, player, accountId);
+        createPlayer(socketUuid, gameId, player);
+    }
 
     @Override
     public void createPlayer(UUID socketUuid, UUID gameId, Player player) {
         if (socketUuid == null || gameId == null || player == null) {
             throw new IllegalArgumentException("socketUuid, gameId and player are required");
         }
-        normalizePlayer(socketUuid, player);
+        normalizePlayer(socketUuid, player, player.getAccountId());
 
         GameSession session = gameService.getSession(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("game not found"));
@@ -51,11 +62,14 @@ public class PlayerService implements IPlayerService {
         if (socketUuid == null || gameId == null || player == null) {
             throw new IllegalArgumentException("socketUuid, gameId and player are required");
         }
-        normalizePlayer(socketUuid, player);
-
         Map<String, Player> players = gameService.getSession(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("game not found"))
                 .getPlayers();
+        Player existingPlayer = players.get(player.getUuid());
+        Long accountId = player.getAccountId() != null
+                ? player.getAccountId()
+                : existingPlayer == null ? null : existingPlayer.getAccountId();
+        normalizePlayer(socketUuid, player, accountId);
         players.put(player.getUuid(), player);
         registrationsBySocket.put(socketUuid, new PlayerRegistration(gameId, player.getUuid()));
     }
@@ -93,15 +107,9 @@ public class PlayerService implements IPlayerService {
             return List.of();
         }
 
-        Player observer = session.getPlayers().get(currentPlayer.getPlayerUuid());
-        if (observer == null) {
-            return List.of();
-        }
-
         Map<String, Player> players = session.getPlayers();
         return players.values().stream()
                 .filter(player -> !player.getUuid().equals(currentPlayer.getPlayerUuid()))
-                .filter(player -> isPlayerVisible(observer, player, session.getStatus()))
                 .toList();
     }
 
@@ -125,22 +133,26 @@ public class PlayerService implements IPlayerService {
         return observer != null && distance(observer.getX(), observer.getY(), x, y) <= PLAYER_VISIBILITY_RANGE;
     }
 
-    private boolean isPlayerVisible(Player observer, Player target, GameStatus status) {
-        if (status == GameStatus.LOBBY || status == GameStatus.FINISHED) {
-            return true;
-        }
-        return distance(observer.getX(), observer.getY(), target.getX(), target.getY()) <= PLAYER_VISIBILITY_RANGE;
-    }
-
     private double distance(double firstX, double firstY, double secondX, double secondY) {
         double xDelta = firstX - secondX;
         double yDelta = firstY - secondY;
         return Math.sqrt(xDelta * xDelta + yDelta * yDelta);
     }
 
-    private void normalizePlayer(UUID socketUuid, Player player) {
+    private Long resolveAccountId(String authToken) {
+        if (accountService == null || authToken == null || authToken.isBlank()) {
+            return null;
+        }
+        return accountService.accountIdFromToken(authToken).orElse(null);
+    }
+
+    private void normalizePlayer(UUID socketUuid, Player player, Long accountId) {
         if (player.getUuid() == null || player.getUuid().isBlank()) {
             player.setUuid(socketUuid.toString());
+        }
+        player.setAccountId(accountId);
+        if (accountService != null) {
+            player.setAtlas(accountService.allowedSkinForAccount(accountId, player.getAtlas()));
         }
         if (player.getIsAlive() == null) {
             player.setIsAlive(true);

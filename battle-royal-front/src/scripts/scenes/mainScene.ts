@@ -54,6 +54,7 @@ export default class MainScene extends Phaser.Scene {
   playerUuid : string
   playerSkinTint : number
   playerAtlas : string
+  authToken : string | null
   battleZoneCenter : Phaser.Math.Vector2
   battleZoneMaxRadius : number
   battleZoneMinRadius : number
@@ -99,6 +100,7 @@ export default class MainScene extends Phaser.Scene {
     this.gameOwner = data["gameOwner"];
     this.playerSkinTint = data["skinTint"] || 0xffffff;
     this.playerAtlas = data["playerAtlas"] || "misa";
+    this.authToken = data["authToken"] || null;
   }
 
   create() {
@@ -157,7 +159,8 @@ export default class MainScene extends Phaser.Scene {
       this.gameUuid,
       this.gameFinished.bind(this),
       this.markRemoteShooterOnMinimap.bind(this),
-      this.receiveChatMessage.bind(this)
+      this.receiveChatMessage.bind(this),
+      this.authToken
     );
     this.previousGameStatus = this.backEndWebSocket.gameStatus;
 
@@ -336,7 +339,11 @@ export default class MainScene extends Phaser.Scene {
     }
     const zoneSeverity = 1 - (this.battleZoneRadius / this.battleZoneMaxRadius);
     const damagePerSecond = 4 + zoneSeverity * 24;
+    const wasAlive = this.player.isAlive;
     this.player.takeDamage(damagePerSecond * delta / 1000);
+    if (wasAlive && !this.player.isAlive) {
+      this.backEndWebSocket.destroyPlayer(this.player);
+    }
   }
 
   drawBattleZone() {
@@ -994,7 +1001,11 @@ export default class MainScene extends Phaser.Scene {
       }
       // If bullet was remote, player has been shot otherwise do nothing to avoid sucuide.
       if (this.bulletsGroup.deleteBulletIfRemote(bullet, this.backEndWebSocket)) {
+        const wasAlive = this.player.isAlive;
         this.player.isShot();
+        if (wasAlive && !this.player.isAlive) {
+          this.backEndWebSocket.destroyPlayer(this.player);
+        }
       }
     });
   }

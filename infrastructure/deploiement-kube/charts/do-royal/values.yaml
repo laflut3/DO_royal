@@ -21,6 +21,37 @@ backend:
     limits:
       cpu: 500m
       memory: 512Mi
+  secretName: do-royal-secrets
+
+postgres:
+  enabled: true
+  image:
+    repository: docker.io/library/postgres
+    tag: "17-alpine"
+  database: do_royal
+  username: do_royal
+  secretName: do-royal-secrets
+  storage:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+externalSecret:
+  enabled: false
+  name: do-royal-secrets
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-backend
+  vaultPath: do-royal/prod
+  keys:
+    postgresPassword: POSTGRES_PASSWORD
+    jwtSecret: DO_ROYAL_JWT_SECRET
 
 frontend:
   replicas: 1

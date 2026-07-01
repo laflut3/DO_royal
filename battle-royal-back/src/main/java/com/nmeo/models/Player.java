@@ -28,4 +28,5 @@ public class Player {
     private Integer shield;
     private Integer maxShield;
     private Integer skinTint;
+    private Long accountId;
 }

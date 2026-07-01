@@ -39,7 +39,7 @@ public class PlayerServiceTest {
     }
 
     @Test
-    public void shouldNotReturnDistantPlayersDuringGame() {
+    public void shouldReturnAllOtherPlayersDuringGame() {
         GameService gameService = new GameService();
         PlayerService playerService = new PlayerService(gameService);
         UUID gameId = UUID.randomUUID();
@@ -59,8 +59,9 @@ public class PlayerServiceTest {
 
         List<Player> visiblePlayers = playerService.getPlayersVisibleBy(gameId, firstSocket);
 
-        assertEquals(1, visiblePlayers.size());
-        assertEquals("player-2", visiblePlayers.get(0).getUuid());
+        assertEquals(2, visiblePlayers.size());
+        assertTrue(visiblePlayers.stream().anyMatch(player -> "player-2".equals(player.getUuid())));
+        assertTrue(visiblePlayers.stream().anyMatch(player -> "player-3".equals(player.getUuid())));
     }
 
     @Test
@@ -84,13 +85,14 @@ public class PlayerServiceTest {
     @Test
     public void shouldSerializeMessageTypeAsFrontEndNumber() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of("player-1"), List.of());
+        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of("player-1"), 1, List.of());
 
         JsonNode json = mapper.readTree(mapper.writeValueAsString(message));
 
         assertEquals(3, json.get("type").asInt());
         assertTrue(json.has("players"));
         assertEquals("player-1", json.get("ownerPlayerUuid").asText());
+        assertEquals(1, json.get("roundNumber").asInt());
     }
 
     @Test

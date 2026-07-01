@@ -10,7 +10,9 @@ import com.nmeo.models.Player;
 import com.nmeo.services.BroadcastService;
 import com.nmeo.services.BroadcastService.DisconnectedSession;
 import com.nmeo.services.IPlayerService;
+import com.nmeo.services.impl.AccountService;
 import com.nmeo.services.impl.GameService;
+import com.nmeo.services.impl.PlayerService;
 
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
@@ -41,7 +43,6 @@ public class SocketHandler {
                 logger.info("Game {} removed because it has no players anymore", gameId);
                 return;
             }
-            gameService.updateFinishedState(gameId);
             broadcastService.broadcastGameState(gameId, playerService, gameService);
         }
     }
@@ -50,13 +51,22 @@ public class SocketHandler {
             WsMessageContext ctx,
             IPlayerService playerService,
             GameService gameService,
-            BroadcastService broadcastService) {
+            BroadcastService broadcastService,
+            AccountService accountService) {
         WebSocketMessage newMessage = ctx.message(WebSocketMessage.class);
         logger.debug("handleNewMessage type={} gameId={}", newMessage.getType(), newMessage.getGameId());
         try {
             switch(newMessage.getType()) {
                 case NEW_PLAYER:
-                    playerService.createPlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
+                    if (playerService instanceof PlayerService) {
+                        ((PlayerService) playerService).createPlayer(
+                                newMessage.getSocketUuid(),
+                                newMessage.getGameId(),
+                                newMessage.getPlayer(),
+                                newMessage.getAuthToken());
+                    } else {
+                        playerService.createPlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
+                    }
                     broadcastService.registerPlayerSession(ctx, newMessage.getSocketUuid(), newMessage.getGameId());
                     broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
                     break;

@@ -1,6 +1,8 @@
 import Player, { PlayerInterface } from "./player";
 import BattleRoyalPlayer from "./battleRoyalPlayer";
 
+const REMOTE_PLAYER_STALE_MS = 2500;
+
 export default class MultiPlayers extends Phaser.GameObjects.Group {
     playersMulti : Array<Player>
     scene : Phaser.Scene
@@ -25,16 +27,15 @@ export default class MultiPlayers extends Phaser.GameObjects.Group {
                 this.add(newPlayer);
             } else {
                 playerFound.updateFromJson(backEndPlayer);
-                playerFound.hasBeenUpdated = true;
             }
         });
-        // If a player as not been update, he as beend disconnected
-        this.playersMulti.forEach((player : Player) => {
-            if(player.hasBeenUpdated === true) {
-                player.hasBeenUpdated = false;
-            } else {
-                player.destroy();
+        // Keep remote sprites through short network/visibility gaps; disconnects are removed after a real timeout.
+        this.playersMulti = this.playersMulti.filter((player : Player) => {
+            if (Date.now() - player.lastUpdate <= REMOTE_PLAYER_STALE_MS) {
+                return true;
             }
+            player.destroy();
+            return false;
         });
 
     }
