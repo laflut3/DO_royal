@@ -33,7 +33,8 @@ const UI = {
     muted: "#91aeb6",
     soft: "#b7d8de",
     amberText: "#f4d35e",
-    dangerText: "#ff6b6b"
+    dangerText: "#ff6b6b",
+    font: "Inter, Arial, sans-serif"
 };
 
 export default class MenuScene extends Phaser.Scene {
@@ -69,6 +70,7 @@ export default class MenuScene extends Phaser.Scene {
     authPanel : Phaser.GameObjects.Container
     shopPanel : Phaser.GameObjects.Container
     authMessageText : Phaser.GameObjects.Text
+    nativeSettingsKeydownHandler : (event: KeyboardEvent) => void
 
     constructor() {
       super({ key: 'MenuScene' })
@@ -106,121 +108,141 @@ export default class MenuScene extends Phaser.Scene {
         this.createAnimatedBackground();
 
         /* Title */
-        let textTitle = this.add.text(this.frontConf.width/2, 38, "Battle Royal 2D");
-        textTitle.setOrigin(0.5, 0.5);
-        textTitle.setFontSize(44);
+        let textTitle = this.add.text(64, 42, "Battle Royal 2D");
+        textTitle.setOrigin(0, 0.5);
+        textTitle.setFontFamily(UI.font);
+        textTitle.setFontSize(42);
         textTitle.setColor(UI.text);
         textTitle.setStroke("#02070a", 8);
-        this.tweens.add({ targets: textTitle, y: 43, duration: 1800, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-        let textSubTitle = this.add.text(this.frontConf.width/2, 82, "Choisis ton combattant. Rejoins l'arene. Survis.");
-        textSubTitle.setOrigin(0.5, 0.5);
-        textSubTitle.setFontSize(18);
+        let textSubTitle = this.add.text(68, 82, "Choisis ton combattant, rejoins une partie ou cree ton serveur.");
+        textSubTitle.setOrigin(0, 0.5);
+        textSubTitle.setFontFamily(UI.font);
+        textSubTitle.setFontSize(16);
         textSubTitle.setColor(UI.soft);
         this.createAccountBar();
 
         /* Pseudo */
-        this.createPanel(this.frontConf.width/2, 170, 640, 132, UI.teal, 0.58);
-        let pseudoLabel = this.add.text(this.frontConf.width/2 - 258, 134, "Pseudo");
-        pseudoLabel.setOrigin(0.5, 0.5);
-        pseudoLabel.setFontSize(17);
+        this.createPanel(230, 405, 340, 470, UI.teal, 0.5);
+        let profileTitle = this.add.text(230, 190, "Profil");
+        profileTitle.setOrigin(0.5, 0.5);
+        profileTitle.setFontFamily(UI.font);
+        profileTitle.setFontSize(25);
+        profileTitle.setColor(UI.text);
+        let pseudoLabel = this.add.text(90, 230, "Pseudo");
+        pseudoLabel.setOrigin(0, 0.5);
+        pseudoLabel.setFontFamily(UI.font);
+        pseudoLabel.setFontSize(14);
         pseudoLabel.setColor(UI.soft);
-        this.createInputFrame(this.frontConf.width/2 - 72, 134, 250, 38);
-        this.pseudoText = this.add.text(this.frontConf.width/2 - 72, 134, "Enter pseudo");
+        this.createInputFrame(230, 262, 245, 42);
+        this.pseudoText = this.add.text(230, 262, "Enter pseudo");
         this.pseudoText.setOrigin(0.5, 0.5);
-        this.pseudoText.setFontSize(17);
+        this.pseudoText.setFontFamily(UI.font);
+        this.pseudoText.setFontSize(16);
         this.pseudoText.setColor(UI.text);
         this.pseudoText.setInteractive({ useHandCursor: true });
         this.pseudoText.on('pointerdown', () => this.openTextInput(this.pseudoText, "Enter pseudo"));
 
         /* Skin */
-        let skinLabel = this.add.text(this.frontConf.width/2 - 258, 195, "Personnage");
-        skinLabel.setOrigin(0.5, 0.5);
-        skinLabel.setFontSize(17);
+        let skinLabel = this.add.text(90, 318, "Personnage");
+        skinLabel.setOrigin(0, 0.5);
+        skinLabel.setFontFamily(UI.font);
+        skinLabel.setFontSize(14);
         skinLabel.setColor(UI.soft);
-        this.add.rectangle(this.frontConf.width/2 - 118, 196, 82, 64, 0x081116, 0.78).setStrokeStyle(1, UI.teal, 0.35);
-        this.skinPreview = this.add.sprite(this.frontConf.width/2 - 118, 198, "misa", "misa-front");
-        this.skinPreview.setScale(2.1, 2.1);
-        this.skinNameText = this.add.text(this.frontConf.width/2 - 30, 184, this.skinOptions[this.selectedSkinIndex].name);
-        this.skinNameText.setOrigin(0, 0.5);
-        this.skinNameText.setFontSize(20);
+        this.add.rectangle(230, 392, 136, 136, 0x081116, 0.78).setStrokeStyle(1, UI.teal, 0.35);
+        this.skinPreview = this.add.sprite(230, 390, "misa", "misa-front");
+        this.skinPreview.setScale(3.2, 3.2);
+        this.skinNameText = this.add.text(230, 486, this.skinOptions[this.selectedSkinIndex].name);
+        this.skinNameText.setOrigin(0.5, 0.5);
+        this.skinNameText.setFontFamily(UI.font);
+        this.skinNameText.setFontSize(22);
         this.skinNameText.setColor(UI.text);
-        this.skinDescriptionText = this.add.text(this.frontConf.width/2 - 30, 210, this.skinOptions[this.selectedSkinIndex].description);
-        this.skinDescriptionText.setOrigin(0, 0.5);
+        this.skinDescriptionText = this.add.text(230, 517, this.skinOptions[this.selectedSkinIndex].description);
+        this.skinDescriptionText.setOrigin(0.5, 0.5);
+        this.skinDescriptionText.setFontFamily(UI.font);
         this.skinDescriptionText.setFontSize(13);
         this.skinDescriptionText.setColor(UI.muted);
-        this.skinDescriptionText.setWordWrapWidth(250);
-        this.createArrowButton(this.frontConf.width/2 + 210, 186, "<", () => this.changeSkin(-1));
-        this.createArrowButton(this.frontConf.width/2 + 266, 186, ">", () => this.changeSkin(1));
+        this.skinDescriptionText.setAlign("center");
+        this.skinDescriptionText.setWordWrapWidth(230);
+        this.createArrowButton(130, 392, "<", () => this.changeSkin(-1));
+        this.createArrowButton(330, 392, ">", () => this.changeSkin(1));
         this.tweens.add({ targets: this.skinPreview, y: this.skinPreview.y - 5, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
         this.updateSkinPreview();
 
         /* Join Section */
-        this.createPanel(this.frontConf.width/2 - 305, 445, 430, 335, UI.teal, 0.5);
-        this.textJoin = this.add.text(this.frontConf.width/2 - 305, 298, "Rejoindre une partie");
+        this.createPanel(640, 405, 370, 470, UI.teal, 0.5);
+        this.textJoin = this.add.text(640, 190, "Rejoindre");
         this.textJoin.setOrigin(0.5, 0.5);
-        this.textJoin.setFontSize(24);
+        this.textJoin.setFontFamily(UI.font);
+        this.textJoin.setFontSize(25);
         this.textJoin.setColor(UI.text);
 
         /* Button Refresh */
-        this.createTextButton(this.frontConf.width/2 - 405, 612, 150, 38, "Actualiser", UI.teal, () => {
+        this.createTextButton(555, 610, 145, 42, "Actualiser", UI.teal, () => {
             this.webSocket.sendServerListRequest();
         });
 
         /* Button Join */
-        this.createTextButton(this.frontConf.width/2 - 205, 612, 180, 38, "Rejoindre", UI.amber, () => {
+        this.createTextButton(725, 610, 145, 42, "Jouer", UI.amber, () => {
             this.joinServer();
         });
 
         /* Server List */
-        let textServer = this.add.text(this.frontConf.width/2 - 305, 342 , "Serveurs disponibles");
+        let textServer = this.add.text(640, 238 , "Serveurs disponibles");
         textServer.setOrigin(0.5, 0.5);
-        textServer.setFontSize(15);
+        textServer.setFontFamily(UI.font);
+        textServer.setFontSize(14);
         textServer.setColor(UI.soft);
-        this.add.rectangle(this.frontConf.width/2 - 305, 465, 365, 210, 0x071017, 0.62).setStrokeStyle(1, UI.teal, 0.22);
+        this.add.rectangle(640, 410, 310, 300, 0x071017, 0.62).setStrokeStyle(1, UI.teal, 0.22);
 
         this.serverList = new Array<ServerListEntry>();
         this.graphicServerList = new Array<Phaser.GameObjects.Text>();
         this.graphicServerRows = new Array<Phaser.GameObjects.Rectangle>();
 
         /* Create Section */
-        this.createPanel(this.frontConf.width/2 + 305, 445, 430, 335, UI.amber, 0.5);
-        let textCreateSection = this.add.text(this.frontConf.width/2 + 305, 298, "Creer une partie");
+        this.createPanel(1050, 405, 370, 470, UI.amber, 0.5);
+        let textCreateSection = this.add.text(1050, 190, "Creer");
         textCreateSection.setOrigin(0.5, 0.5);
-        textCreateSection.setFontSize(24);
+        textCreateSection.setFontFamily(UI.font);
+        textCreateSection.setFontSize(25);
         textCreateSection.setColor(UI.text);
 
-        this.createInputFrame(this.frontConf.width/2 +305, 352, 285, 38);
-        this.serverNameText = this.add.text(this.frontConf.width/2 +305, 352, "Enter server name");
+        this.add.text(905, 240, "Nom du serveur").setOrigin(0, 0.5).setFontFamily(UI.font).setFontSize(14).setColor(UI.soft);
+        this.createInputFrame(1050, 276, 270, 42);
+        this.serverNameText = this.add.text(1050, 276, "Enter server name");
         this.serverNameText.setOrigin(0.5, 0.5);
-        this.serverNameText.setFontSize(17);
+        this.serverNameText.setFontFamily(UI.font);
+        this.serverNameText.setFontSize(16);
         this.serverNameText.setColor(UI.text);
         this.serverNameText.setInteractive({ useHandCursor: true });
         this.serverNameText.on('pointerdown', () => this.openTextInput(this.serverNameText, "Enter server name"));
 
-        let mapLabel = this.add.text(this.frontConf.width/2 + 305, 405, "Carte");
-        mapLabel.setOrigin(0.5, 0.5);
-        mapLabel.setFontSize(16);
+        let mapLabel = this.add.text(905, 346, "Carte");
+        mapLabel.setOrigin(0, 0.5);
+        mapLabel.setFontFamily(UI.font);
+        mapLabel.setFontSize(14);
         mapLabel.setColor(UI.soft);
-        this.add.rectangle(this.frontConf.width/2 + 305, 466, 315, 98, 0x071017, 0.58).setStrokeStyle(1, UI.amber, 0.28);
-        this.createArrowButton(this.frontConf.width/2 + 150, 455, "<", () => this.changeMap(-1));
-        this.createArrowButton(this.frontConf.width/2 + 460, 455, ">", () => this.changeMap(1));
-        this.mapNameText = this.add.text(this.frontConf.width/2 + 305, 445, "");
+        this.add.rectangle(1050, 430, 290, 130, 0x071017, 0.58).setStrokeStyle(1, UI.amber, 0.28);
+        this.createArrowButton(918, 415, "<", () => this.changeMap(-1));
+        this.createArrowButton(1182, 415, ">", () => this.changeMap(1));
+        this.mapNameText = this.add.text(1050, 402, "");
         this.mapNameText.setOrigin(0.5, 0.5);
-        this.mapNameText.setFontSize(21);
+        this.mapNameText.setFontFamily(UI.font);
+        this.mapNameText.setFontSize(22);
         this.mapNameText.setColor(UI.text);
-        this.mapDescriptionText = this.add.text(this.frontConf.width/2 + 305, 476, "");
+        this.mapDescriptionText = this.add.text(1050, 448, "");
         this.mapDescriptionText.setOrigin(0.5, 0.5);
+        this.mapDescriptionText.setFontFamily(UI.font);
         this.mapDescriptionText.setFontSize(12);
         this.mapDescriptionText.setColor(UI.muted);
         this.mapDescriptionText.setAlign("center");
         this.mapDescriptionText.setWordWrapWidth(260);
         this.updateMapPreview();
 
-        this.createTextButton(this.frontConf.width/2 + 305, 590, 225, 42, "Creer le serveur", UI.amber, () => {
+        this.createTextButton(1050, 610, 250, 46, "Creer le serveur", UI.amber, () => {
             this.createGame();
         });
 
-        this.createTextButton(this.frontConf.width - 120, 48, 130, 34, "Parametres", UI.teal, () => {
+        this.createTextButton(this.frontConf.width - 120, 58, 130, 36, "Parametres", UI.teal, () => {
             this.openSettingsPanel();
         });
 
@@ -228,11 +250,17 @@ export default class MenuScene extends Phaser.Scene {
         this.createAuthPanel();
         this.createShopPanel();
         this.refreshAccount();
-        this.input.keyboard.on("keydown", (event: KeyboardEvent) => {
-            if (this.waitingControl === null) {
+        this.nativeSettingsKeydownHandler = (event: KeyboardEvent) => {
+            if (this.waitingControl === null || !this.settingsPanel || !this.settingsPanel.visible) {
                 return;
             }
+            event.preventDefault();
+            event.stopPropagation();
             this.setControl(this.waitingControl, normalizeKeyboardEventKey(event));
+        };
+        window.addEventListener("keydown", this.nativeSettingsKeydownHandler, true);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            window.removeEventListener("keydown", this.nativeSettingsKeydownHandler, true);
         });
         this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
             if (this.waitingControl === null || !pointer.rightButtonDown()) {
@@ -350,18 +378,20 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     createAccountBar() {
-        const panelX = 208;
-        this.createPanel(panelX, 55, 386, 76, UI.teal, 0.48);
-        this.accountStatusText = this.add.text(panelX - 155, 38, "Invite");
+        const panelX = 920;
+        this.createPanel(panelX, 58, 330, 76, UI.teal, 0.36);
+        this.accountStatusText = this.add.text(panelX - 145, 41, "Invite");
         this.accountStatusText.setOrigin(0, 0.5);
+        this.accountStatusText.setFontFamily(UI.font);
         this.accountStatusText.setFontSize(15);
         this.accountStatusText.setColor(UI.text);
-        this.coinsText = this.add.text(panelX - 155, 64, "0 pieces");
+        this.coinsText = this.add.text(panelX - 145, 66, "0 pieces");
         this.coinsText.setOrigin(0, 0.5);
+        this.coinsText.setFontFamily(UI.font);
         this.coinsText.setFontSize(11);
         this.coinsText.setColor(UI.amberText);
-        this.createSmallButton(panelX + 70, 55, 82, "Compte", () => this.openAuthPanel());
-        this.createSmallButton(panelX + 160, 55, 86, "Boutique", () => this.openShopPanel());
+        this.createSmallButton(panelX + 58, 58, 78, "Compte", () => this.openAuthPanel());
+        this.createSmallButton(panelX + 145, 58, 82, "Boutique", () => this.openShopPanel());
     }
 
     createSmallButton(x: number, y: number, width: number, label: string, callback: () => void) {
@@ -370,8 +400,8 @@ export default class MenuScene extends Phaser.Scene {
 
     updateAccountBar() {
         if (this.authSession === null) {
-            this.accountStatusText.setText("Invite - 4 skins");
-            this.coinsText.setText("Connexion requise pour les pieces");
+            this.accountStatusText.setText("Invite");
+            this.coinsText.setText("Compte requis");
             return;
         }
         this.accountStatusText.setText(this.authSession.account.username);
@@ -410,6 +440,10 @@ export default class MenuScene extends Phaser.Scene {
         title.setOrigin(0.5, 0.5);
         title.setFontSize(28);
         title.setColor("#f6fbff");
+        const authHint = this.add.text(centerX, centerY - 85, "Pseudo 3-24 caracteres, mot de passe 10 caracteres min.");
+        authHint.setOrigin(0.5, 0.5);
+        authHint.setFontSize(13);
+        authHint.setColor("#b7d8de");
         this.authMessageText = this.add.text(centerX, centerY + 95, "");
         this.authMessageText.setOrigin(0.5, 0.5);
         this.authMessageText.setFontSize(14);
@@ -433,7 +467,7 @@ export default class MenuScene extends Phaser.Scene {
             this.refreshAccount();
         });
         close.on("clicked", () => this.closeAuthPanel());
-        this.authPanel.add([overlay, panel, title, usernameInput, passwordInput, login, loginText, register, registerText, logout, close, this.authMessageText]);
+        this.authPanel.add([overlay, panel, title, authHint, usernameInput, passwordInput, login, loginText, register, registerText, logout, close, this.authMessageText]);
     }
 
     async submitAuth(usernameInput: Phaser.GameObjects.DOMElement, passwordInput: Phaser.GameObjects.DOMElement, shouldRegister: boolean) {
@@ -659,6 +693,7 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     openSettingsPanel() {
+        this.closeActiveTextInput(true);
         this.waitingControl = null;
         this.refreshSettingsRows();
         this.settingsPanel.setVisible(true);
@@ -720,6 +755,7 @@ export default class MenuScene extends Phaser.Scene {
 
         const text = this.add.text(x, y, label);
         text.setOrigin(0.5, 0.5);
+        text.setFontFamily(UI.font);
         text.setFontSize(fontSize);
         text.setColor(UI.text);
         text.setInteractive({ useHandCursor: true });
@@ -734,6 +770,7 @@ export default class MenuScene extends Phaser.Scene {
         button.on("clicked", callback);
         const text = this.add.text(x, y - 1, label);
         text.setOrigin(0.5, 0.5);
+        text.setFontFamily(UI.font);
         text.setFontSize(22);
         text.setColor(UI.amberText);
         text.setInteractive({ useHandCursor: true });
@@ -768,7 +805,7 @@ export default class MenuScene extends Phaser.Scene {
         mapGraphics.lineBetween(768, 205, 900, 205);
         mapGraphics.lineBetween(638, 95, 638, 256);
         mapGraphics.lineBetween(638, 632, 638, 700);
-        this.add.rectangle(this.frontConf.width / 2, 430, 1040, 490, 0x071017, 0.18).setStrokeStyle(1, UI.teal, 0.08);
+        this.add.rectangle(this.frontConf.width / 2, 405, 1180, 520, 0x071017, 0.18).setStrokeStyle(1, UI.teal, 0.08);
         let scanLine = this.add.rectangle(this.frontConf.width / 2, 116, this.frontConf.width - 90, 2, UI.teal, 0.13);
         this.tweens.add({ targets: scanLine, y: this.frontConf.height - 26, duration: 4800, repeat: -1, ease: "Sine.easeInOut" });
     }
@@ -785,15 +822,16 @@ export default class MenuScene extends Phaser.Scene {
         this.textJoin.setColor(UI.text);
         let i = 0;
         this.serverList.forEach( ( server : ServerListEntry) => {
-            const rowY = 378 + i;
-            let rowServer = this.add.rectangle(this.frontConf.width/2 - 305, rowY, 334, 32, UI.panelAlt, 0.42);
+            const rowY = 280 + i;
+            let rowServer = this.add.rectangle(640, rowY, 282, 34, UI.panelAlt, 0.42);
             rowServer.setStrokeStyle(1, UI.teal, 0.12);
             rowServer.setInteractive({ useHandCursor: true });
             const mapDefinition = getMapDefinition(server.mapId);
             const displayedMapName = server.mapName || mapDefinition.name;
-            let textServer = this.add.text(this.frontConf.width/2 - 305, rowY , server.gameName + " (" + displayedMapName + ")");
+            let textServer = this.add.text(640, rowY , server.gameName + " (" + displayedMapName + ")");
             textServer.setOrigin(0.5, 0.5);
-            textServer.setFontSize(14);
+            textServer.setFontFamily(UI.font);
+            textServer.setFontSize(13);
             textServer.setColor(UI.soft);
             textServer.setInteractive({ useHandCursor: true });
 

@@ -39,7 +39,7 @@ public class PlayerServiceTest {
     }
 
     @Test
-    public void shouldNotReturnDistantPlayersDuringGame() {
+    public void shouldReturnAllOtherPlayersDuringGame() {
         GameService gameService = new GameService();
         PlayerService playerService = new PlayerService(gameService);
         UUID gameId = UUID.randomUUID();
@@ -59,8 +59,9 @@ public class PlayerServiceTest {
 
         List<Player> visiblePlayers = playerService.getPlayersVisibleBy(gameId, firstSocket);
 
-        assertEquals(1, visiblePlayers.size());
-        assertEquals("player-2", visiblePlayers.get(0).getUuid());
+        assertEquals(2, visiblePlayers.size());
+        assertTrue(visiblePlayers.stream().anyMatch(player -> "player-2".equals(player.getUuid())));
+        assertTrue(visiblePlayers.stream().anyMatch(player -> "player-3".equals(player.getUuid())));
     }
 
     @Test

@@ -113,9 +113,17 @@ public class AccountService {
 
     private void register(Context ctx) {
         assertEnabled();
-        AuthRequest request = ctx.bodyAsClass(AuthRequest.class);
-        String username = normalizeUsername(request.getUsername());
-        String password = normalizePassword(request.getPassword());
+        AuthRequest request;
+        String username;
+        String password;
+        try {
+            request = ctx.bodyAsClass(AuthRequest.class);
+            username = normalizeUsername(request.getUsername());
+            password = normalizePassword(request.getPassword());
+        } catch (IllegalArgumentException exception) {
+            ctx.status(400).json(error(exception.getMessage()));
+            return;
+        }
         try (Connection connection = connection()) {
             connection.setAutoCommit(false);
             long accountId;
@@ -143,9 +151,17 @@ public class AccountService {
 
     private void login(Context ctx) {
         assertEnabled();
-        AuthRequest request = ctx.bodyAsClass(AuthRequest.class);
-        String username = normalizeUsername(request.getUsername());
-        String password = normalizePassword(request.getPassword());
+        AuthRequest request;
+        String username;
+        String password;
+        try {
+            request = ctx.bodyAsClass(AuthRequest.class);
+            username = normalizeUsername(request.getUsername());
+            password = normalizePassword(request.getPassword());
+        } catch (IllegalArgumentException exception) {
+            ctx.status(400).json(error(exception.getMessage()));
+            return;
+        }
         try (Connection connection = connection();
              PreparedStatement statement = connection.prepareStatement("select id, password_hash from accounts where username = ?")) {
             statement.setString(1, username);
