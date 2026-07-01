@@ -6,7 +6,9 @@ import Player, { PlayerInterface } from "../objects/player";
 import MainScene from "../scenes/mainScene";
 
 
-const LATENCY_MIN = 30;
+const PLAYER_UPDATE_MIN_INTERVAL_MS = 100;
+const PLAYER_UPDATE_FORCE_INTERVAL_MS = 500;
+const PLAYER_POSITION_EPSILON = 0.5;
 
 export enum MessageType {
     NEW_PLAYER  = 1,
@@ -70,6 +72,7 @@ export default class BackEndWebSocket {
     playerUuids : Array<string>
     roundNumber : number
     authToken : string | null
+    lastSentPlayerState : PlayerInterface | null
 
 
     constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any, authToken: string | null = null) {
@@ -93,6 +96,7 @@ export default class BackEndWebSocket {
         this.playerUuids = new Array<string>();
         this.roundNumber = 0;
         this.authToken = authToken;
+        this.lastSentPlayerState = null;
 
         this.webSocket.onopen = (ev: Event) => {
             this.registerPlayer(player);
@@ -152,18 +156,47 @@ export default class BackEndWebSocket {
     }
 
     updatePlayerPosition(player : Player) {
-        // The player position is updated only every 30 ms
-        if(this.webSocket.readyState === WebSocket.OPEN &&
-            performance.now() - this.lastUpdateSent > LATENCY_MIN) {
-            let jsonObject : PlayerInterface = player.toJsonBackEnd();
-            let message = {};
-            message[KeyWords.SOCKET_UUID] = this.uuid;
-            message[KeyWords.GAME_ID] = this.gameUuid;
-            message[KeyWords.MESSAGE_TYPE] = MessageType.PLAYER_MOVED;
-            message[KeyWords.PLAYER_INFO] = jsonObject;
-            this.webSocket.send(JSON.stringify(message));
-            this.lastUpdateSent = performance.now();
+        if(this.webSocket.readyState !== WebSocket.OPEN) {
+            return;
         }
+
+        const now = performance.now();
+        const elapsed = now - this.lastUpdateSent;
+        if(elapsed < PLAYER_UPDATE_MIN_INTERVAL_MS) {
+            return;
+        }
+
+        let jsonObject : PlayerInterface = player.toJsonBackEnd();
+        if(!this.hasPlayerStateChanged(jsonObject) && elapsed < PLAYER_UPDATE_FORCE_INTERVAL_MS) {
+            return;
+        }
+
+        let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
+        message[KeyWords.GAME_ID] = this.gameUuid;
+        message[KeyWords.MESSAGE_TYPE] = MessageType.PLAYER_MOVED;
+        message[KeyWords.PLAYER_INFO] = jsonObject;
+        this.webSocket.send(JSON.stringify(message));
+        this.lastSentPlayerState = jsonObject;
+        this.lastUpdateSent = now;
+    }
+
+    private hasPlayerStateChanged(nextState : PlayerInterface) : boolean {
+        if(this.lastSentPlayerState === null) {
+            return true;
+        }
+
+        const previousState = this.lastSentPlayerState;
+        return Math.abs(nextState.x - previousState.x) > PLAYER_POSITION_EPSILON ||
+            Math.abs(nextState.y - previousState.y) > PLAYER_POSITION_EPSILON ||
+            Math.abs(nextState.velocityX - previousState.velocityX) > PLAYER_POSITION_EPSILON ||
+            Math.abs(nextState.velocityY - previousState.velocityY) > PLAYER_POSITION_EPSILON ||
+            nextState.direction !== previousState.direction ||
+            nextState.frame !== previousState.frame ||
+            nextState.isAlive !== previousState.isAlive ||
+            nextState.health !== previousState.health ||
+            nextState.shield !== previousState.shield ||
+            nextState.skinTint !== previousState.skinTint;
     }
 
     destroyPlayer(player : Player) {

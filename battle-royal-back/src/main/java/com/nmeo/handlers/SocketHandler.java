@@ -83,8 +83,9 @@ public class SocketHandler {
                     break;
                 case PLAYER_MOVED:
                     playerService.updatePlayer(newMessage.getSocketUuid(), newMessage.getGameId(), newMessage.getPlayer());
-                    broadcastService.registerPlayerSession(ctx, newMessage.getSocketUuid(), newMessage.getGameId());
-                    gameService.updateFinishedState(newMessage.getGameId());
+                    if (Boolean.FALSE.equals(newMessage.getPlayer().getIsAlive()) || newMessage.getPlayer().getHealth() == 0) {
+                        gameService.updateFinishedState(newMessage.getGameId());
+                    }
                     broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
                     break;
                 case PLAYER_DESTROY:
