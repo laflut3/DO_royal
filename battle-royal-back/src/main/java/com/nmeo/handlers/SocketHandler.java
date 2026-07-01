@@ -43,7 +43,6 @@ public class SocketHandler {
                 logger.info("Game {} removed because it has no players anymore", gameId);
                 return;
             }
-            gameService.updateFinishedState(gameId);
             broadcastService.broadcastGameState(gameId, playerService, gameService);
         }
     }

@@ -104,7 +104,11 @@ public class GameService {
 
     public void updateGameStatus(UUID gameId, GameStatus status) {
         GameSession session = sessionOrThrow(gameId);
+        GameStatus previousStatus = session.getStatus();
         session.setStatus(status);
+        if (status == GameStatus.STARTING && previousStatus != GameStatus.STARTING) {
+            session.setRoundNumber(session.getRoundNumber() + 1);
+        }
         if (status == GameStatus.LOBBY || status == GameStatus.STARTING) {
             session.setWinnerName("");
             session.getPlayers().values().forEach(player -> {

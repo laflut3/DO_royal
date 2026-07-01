@@ -100,6 +100,7 @@ public class AccountService {
     public void rewardFinishedGame(GameSession session) {
         Set<Long> rewardedAccounts = new LinkedHashSet<>();
         String winnerName = session.getWinnerName();
+        String rewardKey = session.getGameId() + ":round:" + session.getRoundNumber();
         for (Player player : session.getPlayers().values()) {
             Long accountId = player.getAccountId();
             if (accountId == null || !rewardedAccounts.add(accountId)) {
@@ -108,7 +109,7 @@ public class AccountService {
             int reward = player.getName() != null && player.getName().equals(winnerName)
                     ? WIN_REWARD
                     : PARTICIPATION_REWARD;
-            addCoins(accountId, session.getGameId().toString(), reward);
+            addCoins(accountId, rewardKey, reward);
         }
     }
 

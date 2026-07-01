@@ -339,7 +339,11 @@ export default class MainScene extends Phaser.Scene {
     }
     const zoneSeverity = 1 - (this.battleZoneRadius / this.battleZoneMaxRadius);
     const damagePerSecond = 4 + zoneSeverity * 24;
+    const wasAlive = this.player.isAlive;
     this.player.takeDamage(damagePerSecond * delta / 1000);
+    if (wasAlive && !this.player.isAlive) {
+      this.backEndWebSocket.destroyPlayer(this.player);
+    }
   }
 
   drawBattleZone() {
@@ -997,7 +1001,11 @@ export default class MainScene extends Phaser.Scene {
       }
       // If bullet was remote, player has been shot otherwise do nothing to avoid sucuide.
       if (this.bulletsGroup.deleteBulletIfRemote(bullet, this.backEndWebSocket)) {
+        const wasAlive = this.player.isAlive;
         this.player.isShot();
+        if (wasAlive && !this.player.isAlive) {
+          this.backEndWebSocket.destroyPlayer(this.player);
+        }
       }
     });
   }

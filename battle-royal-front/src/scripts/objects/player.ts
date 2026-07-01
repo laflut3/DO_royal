@@ -396,10 +396,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
         if (spawnIndex !== undefined && playerCount !== undefined && spawnIndex >= 0 && playerCount > 0) {
             const clampedPlayerCount = Math.min(playerCount, spawnPoints.length);
-            const spawnSlot = Math.min(
+            const segmentStart = Math.min(
                 spawnPoints.length - 1,
                 Math.floor(spawnIndex * spawnPoints.length / clampedPlayerCount)
             );
+            const segmentEnd = Math.min(
+                spawnPoints.length - 1,
+                Math.max(segmentStart, Math.floor((spawnIndex + 1) * spawnPoints.length / clampedPlayerCount) - 1)
+            );
+            const spawnSlot = Phaser.Math.Between(segmentStart, segmentEnd);
             const spawnPoint = spawnPoints[spawnSlot];
             return new Phaser.Math.Vector2(spawnPoint.x, spawnPoint.y);
         }

@@ -162,6 +162,20 @@ export default class BackEndWebSocket {
         }
     }
 
+    destroyPlayer(player : Player) {
+        if (this.webSocket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        let jsonObject : PlayerInterface = player.toJsonBackEnd();
+        let message = {};
+        message[KeyWords.SOCKET_UUID] = this.uuid;
+        message[KeyWords.GAME_ID] = this.gameUuid;
+        message[KeyWords.MESSAGE_TYPE] = MessageType.PLAYER_DESTROY;
+        message[KeyWords.PLAYER_INFO] = jsonObject;
+        this.webSocket.send(JSON.stringify(message));
+        this.lastUpdateSent = performance.now();
+    }
+
     multiPlayersPositionMessageHandler(messagePlayers: any) {
         // Update other players info
         let updatedPlayers : Array<string> = new Array<string>();
