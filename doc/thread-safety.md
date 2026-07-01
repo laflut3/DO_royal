@@ -7,6 +7,8 @@ L'objectif n'est pas de bloquer tout le serveur avec un seul gros verrou. La str
 - les parties differentes peuvent avancer en parallele ;
 - les operations sensibles d'une meme partie sont protegees par un verrou propre a cette partie ;
 - le registre WebSocket est modifie de facon coherente ;
+- les mouvements des joueurs sont regroupes avant broadcast pour eviter de saturer la boucle serveur ;
+- les objets mutables envoyes au frontend sont copies avant de sortir des sections protegees ;
 - les donnees de compte sont protegees par PostgreSQL avec des transactions, des contraintes et des verrous SQL.
 
 ## Pourquoi la thread safety est necessaire
@@ -31,7 +33,7 @@ Sans protection, le serveur peut produire des erreurs comme :
 
 ## Vue globale de la strategie
 
-La strategie de thread safety se decoupe en trois zones.
+La strategie de thread safety se decoupe en cinq zones.
 
 ### 1. Etat global des parties
 
@@ -75,10 +77,10 @@ com.nmeo.models.GameSession
 Chaque `GameSession` possede son propre verrou :
 
 ```java
-private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
+private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock(true);
 ```
 
-Ce verrou protege l'etat d'une seule partie.
+Ce verrou protege l'etat d'une seule partie. Il est cree en mode equitable (`true`) pour eviter qu'une rafale continue de lectures de broadcast affame les ecritures de gameplay.
 
 Il y a deux types d'acces :
 
@@ -89,7 +91,39 @@ Cela permet a deux parties differentes de fonctionner en parallele. Par exemple,
 
 En revanche, deux modifications dans la meme partie sont ordonnees.
 
-### 3. Etat durable des comptes
+### 3. Snapshots et copies defensives
+
+Classe principale :
+
+```java
+com.nmeo.services.impl.GameService
+```
+
+Le backend ne doit pas envoyer directement au frontend les objets `Player` stockes dans une partie.
+
+`Player` est mutable. Si un thread WebSocket modifie un joueur pendant qu'un autre thread le serialise, le frontend peut recevoir un etat incoherent.
+
+Pour eviter cela :
+
+- `Player.copyOf(...)` cree une copie defensive ;
+- `GameService.snapshotGameState(...)` lit l'etat d'une partie sous un seul `readState(...)` ;
+- les broadcasts utilisent le snapshot, pas les objets internes.
+
+### 4. Broadcast des mouvements
+
+Classe principale :
+
+```java
+com.nmeo.services.MovementBroadcastService
+```
+
+Les mouvements des joueurs ne sont plus broadcastes immediatement a chaque message `PLAYER_MOVED`.
+
+Le serveur garde uniquement le dernier mouvement recu par joueur et par partie, puis envoie un batch toutes les 50 ms.
+
+Cela limite le nombre de broadcasts a une frequence controlee, meme si beaucoup de joueurs envoient des positions en meme temps.
+
+### 5. Etat durable des comptes
 
 Classes principales :
 
@@ -121,7 +155,7 @@ com.nmeo.models.GameSession
 ```java
 private final Map<String, Player> players = new ConcurrentHashMap<>();
 private final Map<String, Bullet> bullets = new ConcurrentHashMap<>();
-private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
+private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock(true);
 ```
 
 Les maps `players` et `bullets` sont des `ConcurrentHashMap`. Elles protegent la structure des collections.
@@ -206,6 +240,25 @@ Donc :
 - les ecritures sont courtes.
 
 Cela evite un gros verrou global qui ralentirait tout le serveur.
+
+### Snapshot de partie
+
+Les broadcasts complets utilisent :
+
+```java
+snapshotGameState(UUID gameId)
+```
+
+Cette methode lit en une seule fois :
+
+- le statut ;
+- le gagnant ;
+- l'owner ;
+- les UUID des joueurs ;
+- le numero de round ;
+- les joueurs copies.
+
+Le snapshot evite de prendre plusieurs read locks pour construire un seul message `GAME_STATE`.
 
 ## `PlayerService` : joueurs et sockets
 
@@ -315,6 +368,66 @@ Puis il envoie les messages hors du verrou.
 
 C'est important pour la performance. Un envoi WebSocket peut etre lent. On ne veut pas bloquer les connexions/deconnexions pendant tout l'envoi reseau.
 
+## `MovementBroadcastService` : mouvements temps reel
+
+Classe :
+
+```java
+com.nmeo.services.MovementBroadcastService
+```
+
+Les mouvements sont le flux le plus frequent du jeu.
+
+Si chaque `PLAYER_MOVED` declenchait directement un broadcast, une partie a 25 joueurs pourrait produire trop d'envois :
+
+- chaque joueur envoie plusieurs positions par seconde ;
+- chaque position doit etre envoyee aux autres joueurs ;
+- le serveur peut accumuler du retard si les messages arrivent plus vite que les sockets ne peuvent les vider.
+
+La strategie actuelle est donc de coalescer les mouvements.
+
+### Fonctionnement
+
+Quand le serveur recoit un `PLAYER_MOVED` vivant :
+
+1. `SocketHandler` met a jour le joueur dans `PlayerService` ;
+2. `SocketHandler` appelle `MovementBroadcastService.queuePlayerMove(...)` ;
+3. le service stocke une copie du dernier etat du joueur dans une `ConcurrentHashMap` par partie ;
+4. toutes les 50 ms, le scheduler envoie un seul message `PLAYER_MOVED` contenant `players`.
+
+Si un joueur envoie plusieurs positions entre deux ticks serveur, seule la derniere est gardee. C'est volontaire : pour l'affichage temps reel, l'etat le plus recent est plus utile qu'une file de positions en retard.
+
+### Thread safety
+
+`MovementBroadcastService` utilise :
+
+```java
+Map<UUID, Map<String, Player>> pendingPlayersByGame = new ConcurrentHashMap<>();
+```
+
+La premiere cle est l'UUID de partie. La deuxieme cle est l'UUID du joueur.
+
+Chaque insertion remplace le dernier mouvement du joueur par une copie defensive :
+
+```java
+Player.copyOf(player)
+```
+
+Le scheduler vide les mouvements avec `remove(key, value)`, ce qui evite de supprimer un mouvement plus recent ajoute pendant le flush.
+
+### Pourquoi c'est plus performant
+
+Avec cette strategie, une partie ne broadcast pas immediatement a chaque input joueur.
+
+Le serveur regroupe les mouvements et controle la frequence de sortie :
+
+- le client envoie jusqu'a 20 updates par seconde ;
+- le serveur flush les mouvements toutes les 50 ms ;
+- les mouvements d'un meme joueur sont coalesces ;
+- le message envoye contient un batch de joueurs au lieu d'un message par joueur.
+
+Cette architecture est beaucoup plus stable pour une partie jusqu'a 25 joueurs.
+
 ## `AccountRepository` : comptes, pieces et skins
 
 Classe :
@@ -393,6 +506,8 @@ Donc si la meme recompense est tentee deux fois, une seule est acceptee.
 
 C'est ce qu'on appelle une operation idempotente.
 
+Les recompenses lisent aussi un snapshot de la partie avant d'attribuer les pieces. Cela evite de parcourir directement les objets `Player` internes pendant qu'un autre thread modifie la partie.
+
 ## Tests de concurrence
 
 Les tests de concurrence sont dans :
@@ -404,7 +519,10 @@ com.nmeo.services.GameServiceTest
 Ils verifient notamment :
 
 - que deux threads qui appellent la fin de partie ne declenchent la recompense qu'une seule fois ;
-- que deux creations concurrentes avec le meme player uuid ne creent qu'un seul joueur.
+- que deux creations concurrentes avec le meme player uuid ne creent qu'un seul joueur ;
+- que les snapshots de partie renvoient des copies de joueurs ;
+- que les joueurs visibles renvoyes au frontend sont copies ;
+- que les batches de mouvement ne gardent pas de references directes vers les joueurs mutables.
 
 Ces tests ne prouvent pas tous les cas possibles, mais ils couvrent les races les plus dangereuses du gameplay.
 
@@ -419,6 +537,8 @@ La strategie actuelle garantit :
 - fin de partie declenchee une seule fois ;
 - registre WebSocket coherent ;
 - broadcasts sans verrou long ;
+- mouvements regroupes par tick serveur ;
+- objets envoyes au frontend copies avant sortie des verrous ;
 - achats de skin atomiques ;
 - recompenses idempotentes ;
 - suppression de compte propre via cascade SQL.
@@ -430,14 +550,13 @@ La strategie est solide pour ce projet, mais elle n'est pas une architecture tem
 Limites connues :
 
 - `Player` reste un objet mutable ;
-- certains objets envoyes au frontend peuvent etre des references directes ;
 - il n'y a pas encore de boucle d'evenements unique par partie ;
-- il n'y a pas encore de copie immutable systematique avant broadcast.
+- il n'y a pas encore de test de charge automatise a 25 vrais sockets ;
+- les balles et le chat restent envoyes immediatement, car ce sont des evenements ponctuels.
 
 Pour aller encore plus loin, on pourrait :
 
 - rendre `Player` immutable ;
-- envoyer des DTO copies au lieu des objets internes ;
 - utiliser une queue d'evenements par partie ;
 - ajouter des tests de charge avec beaucoup de sockets ;
 - mesurer la latence des locks sous stress.
@@ -447,7 +566,9 @@ Pour aller encore plus loin, on pourrait :
 La strategie actuelle est :
 
 - `ConcurrentHashMap` pour les collections partagees ;
-- `ReentrantReadWriteLock` par partie pour les transitions de gameplay ;
+- `ReentrantReadWriteLock(true)` par partie pour les transitions de gameplay ;
 - `ReentrantReadWriteLock` sur le registre WebSocket pour garder les maps synchronisees ;
+- snapshots et copies defensives avant broadcast ;
+- batching des mouvements toutes les 50 ms ;
 - transactions et verrous PostgreSQL pour les comptes, pieces, skins et recompenses ;
 - aucun gros verrou global, pour garder l'application rapide.

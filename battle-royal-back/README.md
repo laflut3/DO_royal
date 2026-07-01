@@ -64,3 +64,30 @@ Once running, the server listens for WebSocket connections at:
 ```
 ws://localhost:8080/game
 ```
+
+## Runtime model
+
+The backend is a WebSocket-first game server. The main runtime components are:
+
+- `GameService`: owns game sessions and protected game-state transitions.
+- `PlayerService`: owns player registration, updates, removals, and socket-to-player mapping.
+- `BroadcastService`: owns the WebSocket registry and sends messages outside registry locks.
+- `MovementBroadcastService`: batches high-frequency player movement updates.
+
+### Thread safety
+
+Each game has its own `GameSession` lock, so separate games can run in parallel while sensitive transitions inside one game stay ordered.
+
+Mutable `Player` objects are copied before they leave protected state. Full `GAME_STATE` messages are built from a snapshot so the server does not serialize internal mutable objects while another thread is updating the same game.
+
+The WebSocket registry also has its own lock. Broadcasts take a socket snapshot first, then send messages outside the registry lock.
+
+### Movement performance
+
+`PLAYER_MOVED` is the hottest message type. The server does not broadcast every movement immediately.
+
+Instead, `MovementBroadcastService` stores the latest movement per player and per game, then flushes a batch every `50 ms`. This keeps the outgoing rate controlled for larger games while preserving recent movement state.
+
+The frontend sends movement updates at up to `20 Hz` and accepts batched `PLAYER_MOVED` messages through the `players` field.
+
+For the detailed concurrency model, see [`../doc/thread-safety.md`](../doc/thread-safety.md).
