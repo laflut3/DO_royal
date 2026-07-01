@@ -70,6 +70,7 @@ export default class MenuScene extends Phaser.Scene {
     authPanel : Phaser.GameObjects.Container
     shopPanel : Phaser.GameObjects.Container
     authMessageText : Phaser.GameObjects.Text
+    authSubmitting : boolean
     nativeSettingsKeydownHandler : (event: KeyboardEvent) => void
 
     constructor() {
@@ -82,6 +83,7 @@ export default class MenuScene extends Phaser.Scene {
         this.frontConf = new FrontConf();
         this.authApi = new AuthApi();
         this.authSession = loadAuthSession();
+        this.authSubmitting = false;
         this.controlSettings = loadControlSettings();
         this.settingsRows = new Map<string, Phaser.GameObjects.Text>();
         this.waitingControl = null;
@@ -501,18 +503,33 @@ export default class MenuScene extends Phaser.Scene {
         authHint.setOrigin(0.5, 0.5);
         authHint.setFontSize(13);
         authHint.setColor("#b7d8de");
-        const usernameInput = this.add.dom(centerX, centerY - 45).createFromHTML('<input data-auth-username maxlength="24" placeholder="pseudo" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />');
-        const passwordInput = this.add.dom(centerX, centerY).createFromHTML('<input data-auth-password type="password" maxlength="128" placeholder="mot de passe" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />');
-        const login = this.add.rectangle(centerX - 85, centerY + 50, 135, 36, 0x122b36, 0.95).setStrokeStyle(1, 0x5fd0b5, 0.7).setInteractive();
-        const loginText = this.add.text(centerX - 85, centerY + 50, "Connexion").setOrigin(0.5, 0.5).setColor("#f6fbff").setFontSize(16);
-        const register = this.add.rectangle(centerX + 85, centerY + 50, 135, 36, 0x122b36, 0.95).setStrokeStyle(1, 0xf4d35e, 0.7).setInteractive();
-        const registerText = this.add.text(centerX + 85, centerY + 50, "Creer").setOrigin(0.5, 0.5).setColor("#f6fbff").setFontSize(16);
+        const authForm = this.add.dom(centerX, centerY + 4).createFromHTML(`
+            <form data-auth-form style="width:320px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+                <input data-auth-username maxlength="24" placeholder="pseudo" autocomplete="username" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />
+                <input data-auth-password type="password" maxlength="128" placeholder="mot de passe" autocomplete="current-password" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />
+                <div style="display:flex;gap:34px;padding-top:2px;">
+                    <button data-auth-login type="submit" style="width:135px;height:36px;border:1px solid rgba(95,208,181,0.7);background:#122b36;color:#f6fbff;font:16px Inter,Arial,sans-serif;cursor:pointer;">Connexion</button>
+                    <button data-auth-register type="button" style="width:135px;height:36px;border:1px solid rgba(244,211,94,0.7);background:#122b36;color:#f6fbff;font:16px Inter,Arial,sans-serif;cursor:pointer;">Creer</button>
+                </div>
+            </form>
+        `);
+        const form = authForm.node.querySelector("[data-auth-form]") as HTMLFormElement;
+        const usernameInput = authForm.node.querySelector("[data-auth-username]") as HTMLInputElement;
+        const passwordInput = authForm.node.querySelector("[data-auth-password]") as HTMLInputElement;
+        const registerButton = authForm.node.querySelector("[data-auth-register]") as HTMLButtonElement;
         const logout = this.add.text(centerX - 190, centerY + 135, "Deconnexion").setColor("#ff6b6b").setFontSize(15).setInteractive();
         const close = this.add.text(centerX + 170, centerY + 135, "Fermer").setColor("#b7d8de").setFontSize(15).setInteractive();
-        login.on("clicked", () => this.submitAuth(usernameInput, passwordInput, false));
-        loginText.setInteractive().on("clicked", () => this.submitAuth(usernameInput, passwordInput, false));
-        register.on("clicked", () => this.submitAuth(usernameInput, passwordInput, true));
-        registerText.setInteractive().on("clicked", () => this.submitAuth(usernameInput, passwordInput, true));
+        form.addEventListener("pointerdown", event => event.stopPropagation());
+        form.addEventListener("click", event => event.stopPropagation());
+        form.addEventListener("keydown", event => event.stopPropagation());
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            this.submitAuth(usernameInput.value, passwordInput.value, false);
+        });
+        registerButton.addEventListener("click", event => {
+            event.preventDefault();
+            this.submitAuth(usernameInput.value, passwordInput.value, true);
+        });
         logout.on("clicked", () => {
             this.authSession = null;
             saveAuthSession(null);
@@ -520,12 +537,15 @@ export default class MenuScene extends Phaser.Scene {
             this.refreshAccount();
         });
         close.on("clicked", () => this.closeAuthPanel());
-        this.authPanel.add([authHint, usernameInput, passwordInput, login, loginText, register, registerText, logout, close]);
+        this.authPanel.add([authHint, authForm, logout, close]);
     }
 
-    async submitAuth(usernameInput: Phaser.GameObjects.DOMElement, passwordInput: Phaser.GameObjects.DOMElement, shouldRegister: boolean) {
-        const username = (usernameInput.node.querySelector("input") as HTMLInputElement).value;
-        const password = (passwordInput.node.querySelector("input") as HTMLInputElement).value;
+    async submitAuth(username: string, password: string, shouldRegister: boolean) {
+        if (this.authSubmitting) {
+            return;
+        }
+        this.authSubmitting = true;
+        this.authMessageText.setText(shouldRegister ? "Creation du compte..." : "Connexion...");
         try {
             this.authSession = shouldRegister
                 ? await this.authApi.register(username, password)
@@ -536,6 +556,8 @@ export default class MenuScene extends Phaser.Scene {
             this.closeAuthPanel();
         } catch(e) {
             this.authMessageText.setText((e as Error).message);
+        } finally {
+            this.authSubmitting = false;
         }
     }
 
