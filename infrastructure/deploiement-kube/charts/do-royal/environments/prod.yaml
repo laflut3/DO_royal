@@ -18,10 +18,15 @@ ingress:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 externalSecret:
   enabled: true
+  name: do-royal
   secretStoreRef:
     kind: ClusterSecretStore
     name: vault-backend
   vaultPath: prod/do-royal
   keys:
-    postgresPassword: PG_PASSWORD
-    jwtSecret: JWT_SECRET
+    serverPort: SERVER_PORT
+    jdbcDatabaseUrl: JDBC_DATABASE_URL
+    postgresDb: POSTGRES_DB
+    postgresUser: POSTGRES_USER
+    postgresPassword: POSTGRES_PASSWORD
+    jwtSecret: DO_ROYAL_JWT_SECRET

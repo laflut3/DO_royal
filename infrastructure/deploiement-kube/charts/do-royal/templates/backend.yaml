@@ -47,11 +47,20 @@ spec:
               containerPort: 8080
           env:
             - name: SERVER_PORT
-              value: "8080"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.secretName | quote }}
+                  key: {{ .Values.externalSecret.keys.serverPort | quote }}
             - name: JDBC_DATABASE_URL
-              value: "jdbc:postgresql://do-royal-postgres:5432/{{ .Values.postgres.database }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.secretName | quote }}
+                  key: {{ .Values.externalSecret.keys.jdbcDatabaseUrl | quote }}
             - name: POSTGRES_USER
-              value: {{ .Values.postgres.username | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.secretName | quote }}
+                  key: {{ .Values.externalSecret.keys.postgresUser | quote }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

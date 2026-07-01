@@ -56,7 +56,7 @@ public class AccountService {
         this.jdbcUrl = normalizeJdbcUrl(env("JDBC_DATABASE_URL", env("DATABASE_URL", "")));
         this.dbUser = env("POSTGRES_USER", env("DB_USERNAME", ""));
         this.dbPassword = env("POSTGRES_PASSWORD", env("DB_PASSWORD", ""));
-        this.jwtSecret = env("DO_ROYAL_JWT_SECRET", "");
+        this.jwtSecret = env("DO_ROYAL_JWT_SECRET", env("JWT_SECRET", ""));
         this.enabled = !jdbcUrl.isBlank() && !jwtSecret.isBlank();
         if (enabled) {
             initSchemaWithRetry();

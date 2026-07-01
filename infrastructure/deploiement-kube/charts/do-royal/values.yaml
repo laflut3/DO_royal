@@ -21,7 +21,7 @@ backend:
     limits:
       cpu: 500m
       memory: 512Mi
-  secretName: do-royal-secrets
+  secretName: do-royal
 
 postgres:
   enabled: true
@@ -30,7 +30,7 @@ postgres:
     tag: "17-alpine"
   database: do_royal
   username: do_royal
-  secretName: do-royal-secrets
+  secretName: do-royal
   storage:
     size: 2Gi
   resources:
@@ -43,13 +43,17 @@ postgres:
 
 externalSecret:
   enabled: false
-  name: do-royal-secrets
+  name: do-royal
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore
     name: vault-backend
-  vaultPath: do-royal/prod
+  vaultPath: prod/do-royal
   keys:
+    serverPort: SERVER_PORT
+    jdbcDatabaseUrl: JDBC_DATABASE_URL
+    postgresDb: POSTGRES_DB
+    postgresUser: POSTGRES_USER
     postgresPassword: POSTGRES_PASSWORD
     jwtSecret: DO_ROYAL_JWT_SECRET
 
