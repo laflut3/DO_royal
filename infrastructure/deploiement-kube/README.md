@@ -29,9 +29,9 @@ Si `main` est protegee, creer un secret `GITOPS_TOKEN` avec les droits `Contents
 
 Le registry utilise `GITHUB_TOKEN` pour publier dans GHCR. Si les packages sont prives, configurer un `imagePullSecret` dans `global.imagePullSecrets`.
 
-Le coffre Vault prod utilise le moteur KV v2 monte sur `secret`.
+Le coffre Vault prod utilise le moteur KV v2 monte sur `secret`, comme Let-Note.
 Le secret applicatif est donc `secret/prod/do-royal`, ce qui correspond au chemin API `/v1/secret/data/prod/do-royal`.
-Le `ClusterSecretStore` `vault-backend` doit etre configure en KV v2, et le chart lit la cle distante `prod/do-royal`.
+Les pods utilisent l'auth Kubernetes Vault avec le ServiceAccount `do-royal-backend` dans le namespace `prod` et le role Vault `do-royal-prod`.
 
 Le secret doit contenir:
 
@@ -41,6 +41,30 @@ Le secret doit contenir:
 - `POSTGRES_USER` avec la valeur `do_royal`
 - `POSTGRES_PASSWORD` avec le mot de passe Postgres prod
 - `DO_ROYAL_JWT_SECRET` avec une valeur longue et aleatoire
+
+Configuration Vault attendue:
+
+```bash
+vault kv put secret/prod/do-royal \
+  SERVER_PORT="8080" \
+  JDBC_DATABASE_URL="jdbc:postgresql://do-royal-postgres:5432/do_royal" \
+  POSTGRES_DB="do_royal" \
+  POSTGRES_USER="do_royal" \
+  POSTGRES_PASSWORD="mot-de-passe-postgres-prod" \
+  DO_ROYAL_JWT_SECRET="secret-jwt-prod-long-et-aleatoire"
+
+vault policy write do-royal-prod - <<'HCL'
+path "secret/data/prod/do-royal" {
+  capabilities = ["read"]
+}
+HCL
+
+vault write auth/kubernetes/role/do-royal-prod \
+  bound_service_account_names="do-royal-backend" \
+  bound_service_account_namespaces="prod" \
+  policies="do-royal-prod" \
+  ttl="1h"
+```
 
 ## Verification
 

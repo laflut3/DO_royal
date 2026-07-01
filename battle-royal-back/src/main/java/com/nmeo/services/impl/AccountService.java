@@ -469,7 +469,10 @@ public class AccountService {
 
     private static String env(String name, String defaultValue) {
         String value = System.getenv(name);
-        return value == null ? defaultValue : value;
+        if (value != null) {
+            return value;
+        }
+        return System.getProperty(name, defaultValue);
     }
 
     private void assertEnabled() {

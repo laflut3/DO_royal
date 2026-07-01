@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.nmeo.handlers.SocketHandler;
+import com.nmeo.infrastructure.VaultEnvironment;
 import com.nmeo.services.BroadcastService;
 import com.nmeo.services.IPlayerService;
 import com.nmeo.services.impl.AccountService;
@@ -18,6 +19,7 @@ public class App {
     private static final Logger logger = LogManager.getLogger(App.class.getName());
     public static void main(String[] args) {
         Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.INFO);
+        VaultEnvironment.load();
         logger.info("Starting the app");
         AccountService accountService = new AccountService();
         GameService gameService = new GameService();
@@ -25,7 +27,8 @@ public class App {
         IPlayerService playerService = new PlayerService(gameService, accountService);
         BroadcastService broadcastService = new BroadcastService();
 
-        int port = System.getenv("SERVER_PORT") != null? Integer.parseInt(System.getenv("SERVER_PORT")) : 8080;
+        String serverPort = System.getProperty("SERVER_PORT", System.getenv("SERVER_PORT"));
+        int port = serverPort != null ? Integer.parseInt(serverPort) : 8080;
         Javalin app = Javalin.create(config -> {
             config.enableCorsForAllOrigins();
         });

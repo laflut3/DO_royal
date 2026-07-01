@@ -14,6 +14,14 @@ images:
 backend:
   replicas: 1
   revisionHistoryLimit: 2
+  serviceAccountName: do-royal-backend
+  vault:
+    addr: http://vault.vault.svc.cluster.local:8200
+    kvMount: secret
+    secretPath: prod/do-royal
+    authMethod: kubernetes
+    k8sAuthMount: kubernetes
+    k8sRole: do-royal-prod
   resources:
     requests:
       cpu: 100m
@@ -21,7 +29,6 @@ backend:
     limits:
       cpu: 500m
       memory: 512Mi
-  secretName: do-royal
 
 postgres:
   enabled: true
@@ -30,7 +37,7 @@ postgres:
     tag: "17-alpine"
   database: do_royal
   username: do_royal
-  secretName: do-royal
+  serviceAccountName: do-royal-backend
   storage:
     size: 2Gi
   resources:

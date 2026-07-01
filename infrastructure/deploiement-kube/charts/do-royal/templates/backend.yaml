@@ -22,6 +22,7 @@ spec:
       annotations:
         do-royal.io/deploy-id: {{ .Values.global.deployId | quote }}
     spec:
+      serviceAccountName: {{ .Values.backend.serviceAccountName | quote }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -46,31 +47,20 @@ spec:
             - name: websocket
               containerPort: 8080
           env:
-            - name: SERVER_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.backend.secretName | quote }}
-                  key: {{ .Values.externalSecret.keys.serverPort | quote }}
-            - name: JDBC_DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.backend.secretName | quote }}
-                  key: {{ .Values.externalSecret.keys.jdbcDatabaseUrl | quote }}
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.backend.secretName | quote }}
-                  key: {{ .Values.externalSecret.keys.postgresUser | quote }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.backend.secretName | quote }}
-                  key: {{ .Values.externalSecret.keys.postgresPassword | quote }}
-            - name: DO_ROYAL_JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.backend.secretName | quote }}
-                  key: {{ .Values.externalSecret.keys.jwtSecret | quote }}
+            - name: VAULT_ADDR
+              value: {{ .Values.backend.vault.addr | quote }}
+            - name: VAULT_KV_MOUNT
+              value: {{ .Values.backend.vault.kvMount | quote }}
+            - name: VAULT_SECRET_PATH
+              value: {{ .Values.backend.vault.secretPath | quote }}
+            - name: VAULT_AUTH_METHOD
+              value: {{ .Values.backend.vault.authMethod | quote }}
+            - name: VAULT_K8S_AUTH_MOUNT
+              value: {{ .Values.backend.vault.k8sAuthMount | quote }}
+            - name: VAULT_K8S_ROLE
+              value: {{ .Values.backend.vault.k8sRole | quote }}
+            - name: VAULT_ENV_MAPPINGS
+              value: SERVER_PORT=SERVER_PORT,JDBC_DATABASE_URL=JDBC_DATABASE_URL,POSTGRES_USER=POSTGRES_USER,POSTGRES_PASSWORD=POSTGRES_PASSWORD,DO_ROYAL_JWT_SECRET=DO_ROYAL_JWT_SECRET
           readinessProbe:
             tcpSocket:
               port: 8080
