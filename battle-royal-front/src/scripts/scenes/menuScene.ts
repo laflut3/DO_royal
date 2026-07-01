@@ -574,7 +574,7 @@ export default class MenuScene extends Phaser.Scene {
         const panel = this.add.rectangle(centerX, centerY, 1040, 540, UI.panel, 0.99).setStrokeStyle(2, UI.amber, 0.72);
         const title = this.add.text(centerX - 450, centerY - 230, "Boutique").setOrigin(0, 0.5).setFontSize(32).setColor(UI.text);
         const subtitle = this.add.text(centerX - 450, centerY - 198, "Visualise les personnages avant d'acheter un skin premium.").setOrigin(0, 0.5).setFontSize(14).setColor(UI.muted);
-        const balance = this.add.text(centerX + 450, centerY - 220, this.authSession ? this.authSession.account.coins + " pieces" : "Compte requis").setOrigin(1, 0.5).setFontSize(15).setColor(UI.amberText);
+        const balance = this.add.text(centerX + 355, centerY - 230, this.authSession ? this.authSession.account.coins + " pieces" : "Compte requis").setOrigin(1, 0.5).setFontSize(15).setColor(UI.amberText);
         this.shopPanel.add([overlay, panel, title]);
         this.shopPanel.add([subtitle, balance]);
         this.skinOptions.filter(skin => skin.price).forEach((skin, index) => {
