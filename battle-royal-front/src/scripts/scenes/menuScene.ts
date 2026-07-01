@@ -378,20 +378,20 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     createAccountBar() {
-        const panelX = 920;
-        this.createPanel(panelX, 58, 330, 76, UI.teal, 0.36);
-        this.accountStatusText = this.add.text(panelX - 145, 41, "Invite");
+        const panelX = this.frontConf.width - 378;
+        this.createPanel(panelX, 58, 360, 76, UI.teal, 0.36);
+        this.accountStatusText = this.add.text(panelX - 160, 41, "Invite");
         this.accountStatusText.setOrigin(0, 0.5);
         this.accountStatusText.setFontFamily(UI.font);
         this.accountStatusText.setFontSize(15);
         this.accountStatusText.setColor(UI.text);
-        this.coinsText = this.add.text(panelX - 145, 66, "0 pieces");
+        this.coinsText = this.add.text(panelX - 160, 66, "0 pieces");
         this.coinsText.setOrigin(0, 0.5);
         this.coinsText.setFontFamily(UI.font);
         this.coinsText.setFontSize(11);
         this.coinsText.setColor(UI.amberText);
-        this.createSmallButton(panelX + 58, 58, 78, "Compte", () => this.openAuthPanel());
-        this.createSmallButton(panelX + 145, 58, 82, "Boutique", () => this.openShopPanel());
+        this.createSmallButton(panelX + 52, 58, 76, "Compte", () => this.openAuthPanel());
+        this.createSmallButton(panelX + 138, 58, 82, "Boutique", () => this.openShopPanel());
     }
 
     createSmallButton(x: number, y: number, width: number, label: string, callback: () => void) {
@@ -406,6 +406,15 @@ export default class MenuScene extends Phaser.Scene {
         }
         this.accountStatusText.setText(this.authSession.account.username);
         this.coinsText.setText(this.authSession.account.coins + " pieces");
+        this.syncProfilePseudoFromAccount();
+    }
+
+    syncProfilePseudoFromAccount() {
+        if (this.authSession === null || !this.pseudoText) {
+            return;
+        }
+        this.pseudoText.setText(this.authSession.account.username);
+        this.pseudoText.setColor(UI.text);
     }
 
     async refreshAccount() {
@@ -427,6 +436,9 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     createAuthPanel() {
+        if (this.authPanel) {
+            this.authPanel.destroy();
+        }
         this.authPanel = this.add.container(0, 0);
         this.authPanel.setDepth(2100);
         this.authPanel.setVisible(false);
@@ -440,14 +452,55 @@ export default class MenuScene extends Phaser.Scene {
         title.setOrigin(0.5, 0.5);
         title.setFontSize(28);
         title.setColor("#f6fbff");
-        const authHint = this.add.text(centerX, centerY - 85, "Pseudo 3-24 caracteres, mot de passe 10 caracteres min.");
-        authHint.setOrigin(0.5, 0.5);
-        authHint.setFontSize(13);
-        authHint.setColor("#b7d8de");
         this.authMessageText = this.add.text(centerX, centerY + 95, "");
         this.authMessageText.setOrigin(0.5, 0.5);
         this.authMessageText.setFontSize(14);
         this.authMessageText.setColor("#f4d35e");
+        this.authPanel.add([overlay, panel, title, this.authMessageText]);
+
+        if (this.authSession !== null) {
+            const infoLabel = this.add.text(centerX, centerY - 82, "Informations du compte");
+            infoLabel.setOrigin(0.5, 0.5);
+            infoLabel.setFontSize(14);
+            infoLabel.setColor(UI.soft);
+            const usernameLabel = this.add.text(centerX - 150, centerY - 35, "Pseudo");
+            usernameLabel.setOrigin(0, 0.5);
+            usernameLabel.setFontSize(14);
+            usernameLabel.setColor(UI.soft);
+            const usernameInput = this.add.dom(centerX, centerY).createFromHTML('<input data-auth-username maxlength="24" style="width:260px;height:34px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />');
+            const input = usernameInput.node.querySelector("input") as HTMLInputElement;
+            input.value = this.authSession.account.username;
+            const coins = this.add.text(centerX, centerY + 46, this.authSession.account.coins + " pieces");
+            coins.setOrigin(0.5, 0.5);
+            coins.setFontSize(15);
+            coins.setColor(UI.amberText);
+            const saveUsername = () => this.updateAccountUsername(input.value);
+            input.addEventListener("keydown", (event: KeyboardEvent) => {
+                event.stopPropagation();
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    input.blur();
+                    saveUsername();
+                }
+            });
+            input.addEventListener("blur", saveUsername);
+            const logout = this.add.text(centerX - 190, centerY + 135, "Deconnexion").setColor("#ff6b6b").setFontSize(15).setInteractive();
+            const close = this.add.text(centerX + 170, centerY + 135, "Fermer").setColor("#b7d8de").setFontSize(15).setInteractive();
+            logout.on("clicked", () => {
+                this.authSession = null;
+                saveAuthSession(null);
+                this.closeAuthPanel();
+                this.refreshAccount();
+            });
+            close.on("clicked", () => this.closeAuthPanel());
+            this.authPanel.add([infoLabel, usernameLabel, usernameInput, coins, logout, close]);
+            return;
+        }
+
+        const authHint = this.add.text(centerX, centerY - 85, "Pseudo 3-24 caracteres, mot de passe 10 caracteres min.");
+        authHint.setOrigin(0.5, 0.5);
+        authHint.setFontSize(13);
+        authHint.setColor("#b7d8de");
         const usernameInput = this.add.dom(centerX, centerY - 45).createFromHTML('<input data-auth-username maxlength="24" placeholder="pseudo" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />');
         const passwordInput = this.add.dom(centerX, centerY).createFromHTML('<input data-auth-password type="password" maxlength="128" placeholder="mot de passe" style="width:260px;height:32px;padding:0 10px;border:1px solid #5fd0b5;background:#071017;color:#f6fbff;text-align:center;font:16px monospace;" />');
         const login = this.add.rectangle(centerX - 85, centerY + 50, 135, 36, 0x122b36, 0.95).setStrokeStyle(1, 0x5fd0b5, 0.7).setInteractive();
@@ -467,7 +520,7 @@ export default class MenuScene extends Phaser.Scene {
             this.refreshAccount();
         });
         close.on("clicked", () => this.closeAuthPanel());
-        this.authPanel.add([overlay, panel, title, authHint, usernameInput, passwordInput, login, loginText, register, registerText, logout, close, this.authMessageText]);
+        this.authPanel.add([authHint, usernameInput, passwordInput, login, loginText, register, registerText, logout, close]);
     }
 
     async submitAuth(usernameInput: Phaser.GameObjects.DOMElement, passwordInput: Phaser.GameObjects.DOMElement, shouldRegister: boolean) {
@@ -480,12 +533,29 @@ export default class MenuScene extends Phaser.Scene {
             saveAuthSession(this.authSession);
             this.authMessageText.setText("Connecte.");
             this.refreshAccount();
+            this.closeAuthPanel();
+        } catch(e) {
+            this.authMessageText.setText((e as Error).message);
+        }
+    }
+
+    async updateAccountUsername(username: string) {
+        if (this.authSession === null) {
+            return;
+        }
+        try {
+            const account = await this.authApi.updateUsername(this.authSession.token, username);
+            this.authSession = { token: this.authSession.token, account };
+            saveAuthSession(this.authSession);
+            this.authMessageText.setText("Pseudo mis a jour.");
+            this.updateAccountBar();
         } catch(e) {
             this.authMessageText.setText((e as Error).message);
         }
     }
 
     openAuthPanel() {
+        this.createAuthPanel();
         this.authMessageText.setText(this.authSession === null ? "" : "Connecte avec " + this.authSession.account.username);
         this.authPanel.setVisible(true);
     }
@@ -529,8 +599,8 @@ export default class MenuScene extends Phaser.Scene {
             }
             this.shopPanel.add([row, previewBack, sprite, name, priceText, stateBox, state]);
         });
-        const closeButton = this.add.rectangle(centerX + 430, centerY + 230, 120, 34, UI.field, 0.96).setStrokeStyle(1, UI.teal, 0.65).setInteractive({ useHandCursor: true });
-        const close = this.add.text(centerX + 430, centerY + 230, "Fermer").setOrigin(0.5, 0.5).setColor(UI.soft).setFontSize(15).setInteractive({ useHandCursor: true });
+        const closeButton = this.add.rectangle(centerX + 430, centerY - 230, 120, 34, UI.field, 0.96).setStrokeStyle(1, UI.teal, 0.65).setInteractive({ useHandCursor: true });
+        const close = this.add.text(centerX + 430, centerY - 230, "Fermer").setOrigin(0.5, 0.5).setColor(UI.soft).setFontSize(15).setInteractive({ useHandCursor: true });
         closeButton.on("clicked", () => this.closeShopPanel());
         close.on("clicked", () => this.closeShopPanel());
         this.shopPanel.add([closeButton, close]);

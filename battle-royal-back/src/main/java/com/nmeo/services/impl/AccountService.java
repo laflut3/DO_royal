@@ -61,6 +61,7 @@ public class AccountService {
         app.post("/auth/register", this::register);
         app.post("/auth/login", this::login);
         app.get("/auth/me", ctx -> ctx.json(requireAccount(ctx)));
+        app.patch("/auth/me", this::updateAccount);
         app.get("/shop", ctx -> ctx.json(SHOP_SKINS.stream().sorted().toList()));
         app.post("/shop/buy", this::buySkin);
     }
@@ -174,6 +175,32 @@ public class AccountService {
                 ctx.json(new AuthResponse(tokenFor(accountId), accountById(accountId).orElseThrow()));
             }
         } catch (SQLException exception) {
+            throw new IllegalStateException(exception);
+        }
+    }
+
+    private void updateAccount(Context ctx) {
+        Account account = requireAccount(ctx);
+        AuthRequest request;
+        String username;
+        try {
+            request = ctx.bodyAsClass(AuthRequest.class);
+            username = normalizeUsername(request.getUsername());
+        } catch (IllegalArgumentException exception) {
+            ctx.status(400).json(error(exception.getMessage()));
+            return;
+        }
+        try (Connection connection = connection();
+             PreparedStatement statement = connection.prepareStatement("update accounts set username = ? where id = ?")) {
+            statement.setString(1, username);
+            statement.setLong(2, account.getId());
+            statement.executeUpdate();
+            ctx.json(accountById(account.getId()).orElseThrow());
+        } catch (SQLException exception) {
+            if ("23505".equals(exception.getSQLState())) {
+                ctx.status(409).json(error("Ce pseudo existe deja."));
+                return;
+            }
             throw new IllegalStateException(exception);
         }
     }

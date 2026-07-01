@@ -61,6 +61,21 @@ export default class AuthApi {
         return response.json();
     }
 
+    async updateUsername(token: string, username: string) : Promise<Account> {
+        const response = await fetch(this.baseUrl + "/auth/me", {
+            method: "PATCH",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ username })
+        });
+        if (!response.ok) {
+            throw new Error(await this.errorMessage(response));
+        }
+        return response.json();
+    }
+
     async buySkin(token: string, skin: string) : Promise<Account> {
         const response = await fetch(this.baseUrl + "/shop/buy", {
             method: "POST",
