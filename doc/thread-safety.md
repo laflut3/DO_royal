@@ -451,4 +451,3 @@ La strategie actuelle est :
 - `ReentrantReadWriteLock` sur le registre WebSocket pour garder les maps synchronisees ;
 - transactions et verrous PostgreSQL pour les comptes, pieces, skins et recompenses ;
 - aucun gros verrou global, pour garder l'application rapide.
-
