@@ -67,6 +67,11 @@ spec:
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 2
           livenessProbe:
             tcpSocket:
               port: 8080
