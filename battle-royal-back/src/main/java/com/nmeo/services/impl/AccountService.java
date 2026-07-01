@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.crypto.Mac;
@@ -27,10 +28,16 @@ import com.nmeo.models.Account;
 import com.nmeo.models.GameSession;
 import com.nmeo.models.Player;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class AccountService {
+    private static final Logger logger = LogManager.getLogger(AccountService.class);
+    private static final int SCHEMA_INIT_ATTEMPTS = 30;
+    private static final long SCHEMA_INIT_DELAY_MILLIS = 2000L;
     private static final int SHOP_PRICE = 600;
     private static final int WIN_REWARD = 100;
     private static final int PARTICIPATION_REWARD = 10;
@@ -52,7 +59,7 @@ public class AccountService {
         this.jwtSecret = env("DO_ROYAL_JWT_SECRET", "");
         this.enabled = !jdbcUrl.isBlank() && !jwtSecret.isBlank();
         if (enabled) {
-            initSchema();
+            initSchemaWithRetry();
         }
     }
 
@@ -329,6 +336,40 @@ public class AccountService {
             statement.execute();
         } catch (SQLException exception) {
             throw new IllegalStateException(exception);
+        }
+    }
+
+    private void initSchemaWithRetry() {
+        IllegalStateException lastFailure = null;
+        for (int attempt = 1; attempt <= SCHEMA_INIT_ATTEMPTS; attempt++) {
+            try {
+                initSchema();
+                return;
+            } catch (IllegalStateException exception) {
+                Throwable cause = exception.getCause();
+                if (!(cause instanceof SQLException)) {
+                    throw exception;
+                }
+                lastFailure = exception;
+                if (attempt == SCHEMA_INIT_ATTEMPTS) {
+                    break;
+                }
+                logger.warn(
+                        "Database is not ready yet, retrying schema initialization (attempt {}/{})",
+                        attempt,
+                        SCHEMA_INIT_ATTEMPTS);
+                sleepSchemaRetryDelay();
+            }
+        }
+        throw new IllegalStateException("Unable to initialize account schema after retries", lastFailure);
+    }
+
+    private void sleepSchemaRetryDelay() {
+        try {
+            TimeUnit.MILLISECONDS.sleep(SCHEMA_INIT_DELAY_MILLIS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Schema initialization interrupted", exception);
         }
     }
 
