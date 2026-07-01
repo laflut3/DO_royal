@@ -32,6 +32,7 @@ export enum KeyWords {
     GAME_STATUS = "gameStatus",
     WINNER_NAME = "winnerName",
     OWNER_PLAYER_UUID = "ownerPlayerUuid",
+    ROUND_NUMBER = "roundNumber",
     CHAT_MESSAGE = "chatMessage",
     PLAYER_UUID = "playerUuid",
     PLAYER_NAME = "playerName",
@@ -67,6 +68,7 @@ export default class BackEndWebSocket {
     ownerPlayerUuid : string
     isOwner : boolean
     playerUuids : Array<string>
+    roundNumber : number
     authToken : string | null
 
 
@@ -89,6 +91,7 @@ export default class BackEndWebSocket {
         this.ownerPlayerUuid = "";
         this.isOwner = false;
         this.playerUuids = new Array<string>();
+        this.roundNumber = 0;
         this.authToken = authToken;
 
         this.webSocket.onopen = (ev: Event) => {
@@ -111,6 +114,7 @@ export default class BackEndWebSocket {
             if(message[KeyWords.MESSAGE_TYPE] === MessageType.GAME_STATE) {
                 this.multiPlayersPositionMessageHandler(message[KeyWords.PLAYERS_INFO]);
                 this.playerUuids = message[KeyWords.PLAYER_UUIDS] || this.playerUuids;
+                this.roundNumber = message[KeyWords.ROUND_NUMBER] || this.roundNumber;
                 this.gameStatusHandler(message[KeyWords.GAME_STATUS]);
                 this.ownerPlayerUuid = message[KeyWords.OWNER_PLAYER_UUID] || "";
                 this.isOwner = this.ownerPlayerUuid === this.currentPlayer.uuid;
@@ -336,7 +340,8 @@ export default class BackEndWebSocket {
                         : [...this.playerUuids, this.currentPlayer.uuid].sort();
                     this.currentPlayer.goToSpawnPoint(
                         spawnOrder.indexOf(this.currentPlayer.uuid),
-                        spawnOrder.length
+                        spawnOrder.length,
+                        this.gameUuid + ":round:" + this.roundNumber + ":players:" + spawnOrder.join("|")
                     );
                 }
                 break;

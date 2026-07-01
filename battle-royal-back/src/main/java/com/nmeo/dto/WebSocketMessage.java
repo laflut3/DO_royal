@@ -30,6 +30,7 @@ public class WebSocketMessage {
     private String winnerName;
     private String ownerPlayerUuid;
     private List<String> playerUuids;
+    private int roundNumber;
     private String status;
     private String errorMessage;
     private Player player;
@@ -41,7 +42,7 @@ public class WebSocketMessage {
     private String playerName;
     private String authToken;
 
-    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<String> playerUuids, List<Player> players) {
+    public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<String> playerUuids, int roundNumber, List<Player> players) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType(MessageType.GAME_STATE);
         message.setGameId(gameId);
@@ -49,6 +50,7 @@ public class WebSocketMessage {
         message.setWinnerName(winnerName == null ? "" : winnerName);
         message.setOwnerPlayerUuid(ownerPlayerUuid);
         message.setPlayerUuids(playerUuids);
+        message.setRoundNumber(roundNumber);
         message.setPlayers(players);
         return message;
     }

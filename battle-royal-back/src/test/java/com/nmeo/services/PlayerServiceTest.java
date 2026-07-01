@@ -85,13 +85,14 @@ public class PlayerServiceTest {
     @Test
     public void shouldSerializeMessageTypeAsFrontEndNumber() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of("player-1"), List.of());
+        WebSocketMessage message = WebSocketMessage.gameState(UUID.randomUUID(), GameStatus.LOBBY, "", "player-1", List.of("player-1"), 1, List.of());
 
         JsonNode json = mapper.readTree(mapper.writeValueAsString(message));
 
         assertEquals(3, json.get("type").asInt());
         assertTrue(json.has("players"));
         assertEquals("player-1", json.get("ownerPlayerUuid").asText());
+        assertEquals(1, json.get("roundNumber").asInt());
     }
 
     @Test

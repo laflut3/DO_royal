@@ -72,6 +72,12 @@ public class GameService {
                 .orElse(null);
     }
 
+    public int getRoundNumber(UUID gameId) {
+        return getSession(gameId)
+                .map(GameSession::getRoundNumber)
+                .orElse(0);
+    }
+
     public List<String> getPlayerUuids(UUID gameId) {
         return getSession(gameId)
                 .map(session -> session.getPlayers().keySet().stream().sorted().toList())
