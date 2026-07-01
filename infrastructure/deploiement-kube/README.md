@@ -29,6 +29,11 @@ Si `main` est protegee, creer un secret `GITOPS_TOKEN` avec les droits `Contents
 
 Le registry utilise `GITHUB_TOKEN` pour publier dans GHCR. Si les packages sont prives, configurer un `imagePullSecret` dans `global.imagePullSecrets`.
 
+Le coffre Vault prod doit exposer le secret `prod/do-royal` avec au minimum:
+
+- `PG_PASSWORD`
+- `JWT_SECRET`
+
 ## Verification
 
 ```bash

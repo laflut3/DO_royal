@@ -21,4 +21,7 @@ externalSecret:
   secretStoreRef:
     kind: ClusterSecretStore
     name: vault-backend
-  vaultPath: do-royal/prod
+  vaultPath: prod/do-royal
+  keys:
+    postgresPassword: PG_PASSWORD
+    jwtSecret: JWT_SECRET
