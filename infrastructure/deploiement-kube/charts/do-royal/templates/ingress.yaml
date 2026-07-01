@@ -25,6 +25,27 @@ spec:
                 name: do-royal-backend
                 port:
                   number: 80
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: do-royal-backend
+                port:
+                  number: 80
+          - path: /shop
+            pathType: Prefix
+            backend:
+              service:
+                name: do-royal-backend
+                port:
+                  number: 80
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: do-royal-backend
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
