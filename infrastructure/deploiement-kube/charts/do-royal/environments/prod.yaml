@@ -1,14 +1,14 @@
 ---
 global:
   environment: prod
-  deployId: 881e899ee99093cd065b2a97f3945d39b3c14f6b
+  deployId: 9d8737bbd821e13c014f5f89b1e5b6b6d97a2f53
 images:
   backend:
     repository: ghcr.io/laflut3/do-royal-backend
-    tag: 1.4.8
+    tag: 1.5.2
   frontend:
     repository: ghcr.io/laflut3/do-royal-frontend
-    tag: 1.4.8
+    tag: 1.5.2
 ingress:
   host: do-royal.polydo.dev
   tls:
