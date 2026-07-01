@@ -66,20 +66,38 @@ public class AccountRepository {
         return findById(accountId).orElseThrow();
     }
 
+    public void delete(long accountId) throws SQLException {
+        try (Connection connection = config.connection();
+             PreparedStatement statement = connection.prepareStatement("delete from accounts where id = ?")) {
+            statement.setLong(1, accountId);
+            statement.executeUpdate();
+        }
+    }
+
     public Account buySkin(Account account, String skin) throws SQLException {
         try (Connection connection = config.connection()) {
             connection.setAutoCommit(false);
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "update accounts set coins = coins - ? where id = ? and coins >= ?")) {
+            try (PreparedStatement lockAccount = connection.prepareStatement("select coins from accounts where id = ? for update")) {
+                lockAccount.setLong(1, account.getId());
+                try (ResultSet resultSet = lockAccount.executeQuery()) {
+                    if (!resultSet.next() || resultSet.getInt("coins") < AccountCatalog.SHOP_PRICE) {
+                        connection.rollback();
+                        return findById(account.getId()).orElseThrow();
+                    }
+                }
+            }
+            if (!grantSkin(connection, account.getId(), skin)) {
+                connection.rollback();
+                return findById(account.getId()).orElseThrow();
+            }
+            try (PreparedStatement statement = connection.prepareStatement("update accounts set coins = coins - ? where id = ?")) {
                 statement.setInt(1, AccountCatalog.SHOP_PRICE);
                 statement.setLong(2, account.getId());
-                statement.setInt(3, AccountCatalog.SHOP_PRICE);
-                if (statement.executeUpdate() == 0) {
+                if (statement.executeUpdate() != 1) {
                     connection.rollback();
                     return findById(account.getId()).orElseThrow();
                 }
             }
-            grantSkin(connection, account.getId(), skin);
             Account updatedAccount = findById(connection, account.getId()).orElseThrow();
             connection.commit();
             return updatedAccount;
@@ -161,12 +179,12 @@ public class AccountRepository {
         }
     }
 
-    private void grantSkin(Connection connection, long accountId, String skin) throws SQLException {
+    private boolean grantSkin(Connection connection, long accountId, String skin) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
                 "insert into account_skins(account_id, skin) values (?, ?) on conflict do nothing")) {
             statement.setLong(1, accountId);
             statement.setString(2, skin);
-            statement.executeUpdate();
+            return statement.executeUpdate() == 1;
         }
     }
 

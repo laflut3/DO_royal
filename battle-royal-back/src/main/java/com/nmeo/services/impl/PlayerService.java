@@ -42,18 +42,22 @@ public class PlayerService implements IPlayerService {
 
         GameSession session = gameService.getSession(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("game not found"));
-        if (session.getStatus() == GameStatus.STARTING || session.getStatus() == GameStatus.PLAYING) {
-            player.setIsAlive(false);
-            player.setHealth(0);
-            player.setShield(0);
-        }
-        Map<String, Player> players = session.getPlayers();
-        if (players.containsKey(player.getUuid())) {
-            throw new IllegalArgumentException("A player with the same uuid already exists in this game.");
-        }
+        session.writeState(() -> {
+            if (session.getStatus() == GameStatus.STARTING || session.getStatus() == GameStatus.PLAYING) {
+                player.setIsAlive(false);
+                player.setHealth(0);
+                player.setShield(0);
+            }
+            Map<String, Player> players = session.getPlayers();
+            if (players.containsKey(player.getUuid())) {
+                throw new IllegalArgumentException("A player with the same uuid already exists in this game.");
+            }
 
-        players.put(player.getUuid(), player);
-        gameService.assignOwnerIfMissing(gameId, player.getUuid());
+            players.put(player.getUuid(), player);
+            if (session.getOwnerPlayerUuid() == null) {
+                session.setOwnerPlayerUuid(player.getUuid());
+            }
+        });
         registrationsBySocket.put(socketUuid, new PlayerRegistration(gameId, player.getUuid()));
     }
 
@@ -62,15 +66,18 @@ public class PlayerService implements IPlayerService {
         if (socketUuid == null || gameId == null || player == null) {
             throw new IllegalArgumentException("socketUuid, gameId and player are required");
         }
-        Map<String, Player> players = gameService.getSession(gameId)
-                .orElseThrow(() -> new IllegalArgumentException("game not found"))
-                .getPlayers();
-        Player existingPlayer = players.get(player.getUuid());
-        Long accountId = player.getAccountId() != null
-                ? player.getAccountId()
-                : existingPlayer == null ? null : existingPlayer.getAccountId();
-        normalizePlayer(socketUuid, player, accountId);
-        players.put(player.getUuid(), player);
+        GameSession session = gameService.getSession(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("game not found"));
+        String playerUuid = player.getUuid();
+        session.writeState(() -> {
+            Map<String, Player> players = session.getPlayers();
+            Player existingPlayer = players.get(playerUuid);
+            Long accountId = player.getAccountId() != null
+                    ? player.getAccountId()
+                    : existingPlayer == null ? null : existingPlayer.getAccountId();
+            normalizePlayer(socketUuid, player, accountId);
+            players.put(player.getUuid(), player);
+        });
         registrationsBySocket.put(socketUuid, new PlayerRegistration(gameId, player.getUuid()));
     }
 
@@ -83,8 +90,18 @@ public class PlayerService implements IPlayerService {
 
         gameService.getSession(registration.getGameId())
                 .ifPresent(session -> {
-                    session.getPlayers().remove(registration.getPlayerUuid());
-                    gameService.transferOwnerIfNeeded(registration.getGameId(), registration.getPlayerUuid());
+                    session.writeState(() -> {
+                        session.getPlayers().remove(registration.getPlayerUuid());
+                        if (!registration.getPlayerUuid().equals(session.getOwnerPlayerUuid())) {
+                            return;
+                        }
+                        List<String> connectedPlayerUuids = session.getPlayers().keySet().stream().sorted().toList();
+                        if (connectedPlayerUuids.isEmpty()) {
+                            session.setOwnerPlayerUuid(null);
+                            return;
+                        }
+                        session.setOwnerPlayerUuid(connectedPlayerUuids.get(0));
+                    });
                 });
         return registration.getGameId();
     }
@@ -107,10 +124,9 @@ public class PlayerService implements IPlayerService {
             return List.of();
         }
 
-        Map<String, Player> players = session.getPlayers();
-        return players.values().stream()
+        return session.readState(() -> session.getPlayers().values().stream()
                 .filter(player -> !player.getUuid().equals(currentPlayer.getPlayerUuid()))
-                .toList();
+                .toList());
     }
 
     @Override
@@ -125,12 +141,14 @@ public class PlayerService implements IPlayerService {
             return false;
         }
 
-        if (session.getStatus() == GameStatus.LOBBY || session.getStatus() == GameStatus.FINISHED) {
-            return true;
-        }
+        return session.readState(() -> {
+            if (session.getStatus() == GameStatus.LOBBY || session.getStatus() == GameStatus.FINISHED) {
+                return true;
+            }
 
-        Player observer = session.getPlayers().get(currentPlayer.getPlayerUuid());
-        return observer != null && distance(observer.getX(), observer.getY(), x, y) <= PLAYER_VISIBILITY_RANGE;
+            Player observer = session.getPlayers().get(currentPlayer.getPlayerUuid());
+            return observer != null && distance(observer.getX(), observer.getY(), x, y) <= PLAYER_VISIBILITY_RANGE;
+        });
     }
 
     private double distance(double firstX, double firstY, double secondX, double secondY) {

@@ -51,6 +51,7 @@ public class AccountService {
         app.post("/auth/login", this::login);
         app.get("/auth/me", ctx -> ctx.json(requireAccount(ctx)));
         app.patch("/auth/me", this::updateAccount);
+        app.delete("/auth/me", this::deleteAccount);
         app.get("/shop", ctx -> ctx.json(AccountCatalog.SHOP_SKINS.stream().sorted().toList()));
         app.post("/shop/buy", this::buySkin);
     }
@@ -159,6 +160,16 @@ public class AccountService {
                 ctx.status(409).json(error("Ce pseudo existe deja."));
                 return;
             }
+            throw new IllegalStateException(exception);
+        }
+    }
+
+    private void deleteAccount(Context ctx) {
+        Account account = requireAccount(ctx);
+        try {
+            repository.delete(account.getId());
+            ctx.status(204);
+        } catch (SQLException exception) {
             throw new IllegalStateException(exception);
         }
     }

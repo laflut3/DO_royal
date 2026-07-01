@@ -1,104 +1,114 @@
 # Thread safety du backend DO Royal
 
-Ce document explique comment le backend evite les bugs quand plusieurs joueurs font des actions en meme temps.
+Ce document explique comment le backend DO Royal reste coherent quand plusieurs joueurs ou plusieurs requetes agissent en meme temps.
 
-Dans ce projet, plusieurs threads peuvent executer du code Java en parallele. Par exemple :
+L'objectif n'est pas de bloquer tout le serveur avec un seul gros verrou. La strategie actuelle est plus fine :
 
-- un joueur cree une partie ;
-- un autre joueur rejoint la meme partie ;
-- plusieurs joueurs bougent en meme temps ;
-- un joueur tire pendant qu'un autre quitte la partie ;
-- deux requetes HTTP arrivent en meme temps sur le compte ou la boutique.
+- les parties differentes peuvent avancer en parallele ;
+- les operations sensibles d'une meme partie sont protegees par un verrou propre a cette partie ;
+- le registre WebSocket est modifie de facon coherente ;
+- les donnees de compte sont protegees par PostgreSQL avec des transactions, des contraintes et des verrous SQL.
 
-La thread safety sert a eviter que ces actions simultanees cassent l'etat du serveur.
+## Pourquoi la thread safety est necessaire
 
-## Classes principales
+Le serveur peut recevoir plusieurs actions en meme temps :
 
-Les classes qui gerent le plus la thread safety sont :
+- deux joueurs rejoignent la meme partie ;
+- un joueur quitte pendant qu'un autre tire ;
+- deux messages WebSocket mettent a jour le meme joueur ;
+- deux broadcasts lisent l'etat pendant une modification ;
+- deux clics arrivent presque en meme temps sur la boutique ;
+- un compte est modifie pendant une autre requete HTTP.
 
-- `GameService`
-- `GameSession`
-- `PlayerService`
-- `BroadcastService`
-- `AccountService`
-- `AccountRepository`
+Sans protection, le serveur peut produire des erreurs comme :
 
-Les classes `GameService`, `PlayerService` et `BroadcastService` gerent surtout l'etat en memoire du jeu.
+- deux proprietaires de partie ;
+- un round qui demarre deux fois ;
+- une recompense distribuee deux fois ;
+- un achat de skin debite deux fois ;
+- une liste de sockets incoherente ;
+- une map Java corrompue ou lue pendant une modification.
 
-Les classes `AccountService` et `AccountRepository` gerent surtout l'etat durable dans PostgreSQL : comptes, pieces, skins et recompenses.
+## Vue globale de la strategie
 
-## `ConcurrentHashMap`
+La strategie de thread safety se decoupe en trois zones.
 
-Une `ConcurrentHashMap` est une map prevue pour etre utilisee par plusieurs threads en meme temps.
+### 1. Etat global des parties
 
-Une `HashMap` classique n'est pas thread-safe. Si plusieurs threads lisent et ecrivent dedans en meme temps, elle peut se retrouver dans un etat incoherent.
-
-Une `ConcurrentHashMap` protege sa structure interne. Elle permet donc :
-
-- plusieurs lectures en parallele ;
-- des ajouts pendant que d'autres threads lisent ;
-- des suppressions sans casser la map ;
-- certaines operations atomiques comme `putIfAbsent`.
-
-## `GameService`
-
-Classe :
+Classe principale :
 
 ```java
 com.nmeo.services.impl.GameService
 ```
 
-Cette classe gere les parties en cours.
-
-Elle contient :
+`GameService` contient la map globale des parties :
 
 ```java
 private final Map<UUID, GameSession> sessions = new ConcurrentHashMap<>();
 ```
 
-Cette map associe un identifiant de partie (`UUID`) a une `GameSession`.
+Cette map est une `ConcurrentHashMap`, donc elle accepte les acces concurrents.
 
-Comme elle est en `ConcurrentHashMap`, plusieurs joueurs peuvent creer, lire ou supprimer des parties sans casser la structure de la map.
+Elle protege la structure globale :
 
-### Creation de partie
+- ajouter une partie ;
+- lire une partie ;
+- supprimer une partie vide ;
+- lister les parties.
 
-La creation d'une partie utilise :
+La creation utilise `putIfAbsent`, ce qui rend la creation atomique :
 
 ```java
 sessions.putIfAbsent(gameId, session)
 ```
 
-Cette operation est atomique.
+Cela veut dire que deux threads ne peuvent pas creer deux parties avec le meme identifiant. Un seul gagne.
 
-Atomique veut dire que l'operation se fait comme une seule action indivisible.
+### 2. Etat interne d'une partie
 
-Donc si deux threads essaient de creer une partie avec le meme `gameId`, un seul thread reussit. L'autre voit que la partie existe deja et recoit une erreur.
-
-Sans `putIfAbsent`, le code pourrait faire :
+Classe principale :
 
 ```java
-if (!sessions.containsKey(gameId)) {
-    sessions.put(gameId, session);
-}
+com.nmeo.models.GameSession
 ```
 
-Ce serait moins sur, car deux threads pourraient passer le `containsKey` avant que l'un des deux fasse le `put`.
-
-Avec `putIfAbsent`, le test et l'ajout sont faits ensemble.
-
-### Suppression de partie vide
-
-La suppression utilise :
+Chaque `GameSession` possede son propre verrou :
 
 ```java
-sessions.remove(gameId, session)
+private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
 ```
 
-Cette forme de `remove` supprime seulement si la valeur actuelle est bien la session attendue.
+Ce verrou protege l'etat d'une seule partie.
 
-C'est plus sur qu'un simple `remove(gameId)`, car on evite de supprimer une session qui aurait ete remplacee entre temps.
+Il y a deux types d'acces :
 
-## `GameSession`
+- `readState(...)` pour lire un etat coherent ;
+- `writeState(...)` pour modifier l'etat de la partie.
+
+Cela permet a deux parties differentes de fonctionner en parallele. Par exemple, une action dans la partie A ne bloque pas une action dans la partie B.
+
+En revanche, deux modifications dans la meme partie sont ordonnees.
+
+### 3. Etat durable des comptes
+
+Classes principales :
+
+```java
+com.nmeo.services.impl.AccountService
+com.nmeo.services.account.AccountRepository
+```
+
+Pour les comptes, la thread safety repose surtout sur PostgreSQL :
+
+- transactions SQL ;
+- contraintes uniques ;
+- cles primaires ;
+- `on conflict do nothing` ;
+- `select ... for update` pour verrouiller une ligne compte pendant un achat.
+
+Java ne doit pas essayer de tout proteger en memoire, car les comptes sont stockes en base. La base de donnees est la source de verite.
+
+## `GameSession` : verrou par partie
 
 Classe :
 
@@ -106,36 +116,98 @@ Classe :
 com.nmeo.models.GameSession
 ```
 
-Cette classe represente l'etat d'une partie.
-
-Elle contient notamment :
+`GameSession` contient :
 
 ```java
 private final Map<String, Player> players = new ConcurrentHashMap<>();
 private final Map<String, Bullet> bullets = new ConcurrentHashMap<>();
+private final ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
 ```
 
-Ces deux maps sont thread-safe.
+Les maps `players` et `bullets` sont des `ConcurrentHashMap`. Elles protegent la structure des collections.
 
-Cela protege :
+Le verrou `stateLock` protege les operations composees.
 
-- l'ajout d'un joueur ;
-- la suppression d'un joueur ;
-- la mise a jour d'un joueur ;
-- l'ajout d'une balle ;
-- la suppression d'une balle.
+Une operation composee est une operation faite en plusieurs etapes. Exemple :
 
-Dans un jeu multijoueur, ces actions arrivent souvent en parallele.
+1. lire le statut de la partie ;
+2. modifier les joueurs ;
+3. changer le gagnant ;
+4. changer le statut.
+
+Une `ConcurrentHashMap` ne suffit pas pour proteger ce genre de sequence. Elle protege la map, mais elle ne garantit pas que toute la sequence soit atomique.
+
+Pour cela, le code utilise :
+
+```java
+session.writeState(() -> {
+    // modifications coherentes de la partie
+});
+```
+
+Et pour lire un etat coherent :
+
+```java
+session.readState(() -> {
+    // lecture de l'etat de la partie
+});
+```
+
+## `GameService` : transitions de partie
+
+Classe :
+
+```java
+com.nmeo.services.impl.GameService
+```
+
+`GameService` gere les transitions importantes :
+
+- creation de partie ;
+- changement de statut ;
+- changement de round ;
+- choix du proprietaire ;
+- transfert du proprietaire ;
+- ajout et suppression de balles ;
+- detection de fin de partie.
+
+Les operations qui modifient une partie utilisent maintenant `writeState`.
+
+Exemples :
+
+- `assignOwnerIfMissing(...)`
+- `transferOwnerIfNeeded(...)`
+- `updateGameStatus(...)`
+- `addBullet(...)`
+- `removeBullet(...)`
+- `updateFinishedState(...)`
+
+### Pourquoi c'est plus sur
+
+Avant, une operation pouvait lire un statut, puis un autre thread pouvait modifier la partie avant la fin de l'operation.
 
 Exemple :
 
-- un joueur tire ;
-- un autre joueur bouge ;
-- un troisieme quitte la partie.
+1. Thread A voit que la partie est `PLAYING`.
+2. Thread B termine la partie.
+3. Thread A continue comme si la partie etait encore `PLAYING`.
 
-Grace aux `ConcurrentHashMap`, les collections `players` et `bullets` restent utilisables meme avec ces actions simultanees.
+Avec `writeState`, les modifications d'une meme partie sont ordonnees. Le thread B attend que le thread A ait fini, ou l'inverse.
 
-## `PlayerService`
+### Pourquoi c'est encore rapide
+
+Le verrou est dans `GameSession`, pas dans `GameService`.
+
+Donc :
+
+- partie A verrouille uniquement partie A ;
+- partie B peut continuer en meme temps ;
+- les lectures peuvent partager le read lock ;
+- les ecritures sont courtes.
+
+Cela evite un gros verrou global qui ralentirait tout le serveur.
+
+## `PlayerService` : joueurs et sockets
 
 Classe :
 
@@ -143,58 +215,55 @@ Classe :
 com.nmeo.services.impl.PlayerService
 ```
 
-Cette classe gere les joueurs dans les parties.
+`PlayerService` gere :
 
-Elle contient :
+- l'ajout d'un joueur ;
+- la mise a jour d'un joueur ;
+- la suppression d'un joueur ;
+- le lien entre un socket et un joueur ;
+- la visibilite des joueurs.
+
+Il contient :
 
 ```java
 private final Map<UUID, PlayerRegistration> registrationsBySocket = new ConcurrentHashMap<>();
 ```
 
-Cette map associe un socket WebSocket a un joueur et a une partie.
+Cette map reste une `ConcurrentHashMap`, car plusieurs sockets peuvent rejoindre, envoyer des messages ou quitter en parallele.
 
-Elle sert a savoir quel joueur correspond a quelle connexion.
-
-Cette map doit etre thread-safe parce que :
-
-- un joueur peut rejoindre ;
-- un joueur peut envoyer des mises a jour ;
-- un joueur peut quitter ;
-- le serveur peut broadcaster l'etat en meme temps.
-
-### Ajout d'un joueur
-
-Quand un joueur rejoint une partie, `PlayerService` recupere la `GameSession`, puis ajoute le joueur dans :
+Pour les operations sur les joueurs d'une partie, `PlayerService` utilise le verrou de la session :
 
 ```java
-session.getPlayers()
+session.writeState(...)
+session.readState(...)
 ```
 
-Cette map vient de `GameSession` et c'est une `ConcurrentHashMap`.
+### Creation de joueur
 
-Le service enregistre aussi le lien entre le socket et le joueur :
+Quand un joueur rejoint, le service fait dans le meme verrou :
 
-```java
-registrationsBySocket.put(socketUuid, new PlayerRegistration(gameId, player.getUuid()));
-```
+- verifier le statut de la partie ;
+- mettre le joueur en spectateur si la partie a deja commence ;
+- verifier que l'uuid du joueur n'existe pas deja ;
+- ajouter le joueur ;
+- definir l'owner si aucun owner n'existe.
 
-Comme `registrationsBySocket` est aussi une `ConcurrentHashMap`, cette operation est adaptee aux acces concurrents.
+Cela evite deux problemes :
 
-### Limite importante
+- deux joueurs avec le meme uuid ;
+- deux threads qui essaient de devenir owner en meme temps.
 
-La map est thread-safe, mais l'objet `Player` lui-meme est mutable.
+### Suppression de joueur
 
-Cela veut dire que plusieurs threads peuvent potentiellement modifier les champs du meme joueur.
+Quand un joueur quitte :
 
-Dans ce projet, la strategie est pragmatique :
+- le socket est retire de `registrationsBySocket` ;
+- le joueur est retire de la partie ;
+- si le joueur etait owner, un nouveau owner est choisi dans la meme section protegee.
 
-- les maps sont protegees ;
-- le serveur remplace souvent le joueur complet avec `players.put(...)` ;
-- le gameplay temps reel accepte de petites incoherences temporaires.
+Le transfert d'owner est donc coherent avec la suppression.
 
-Pour un systeme plus strict, on pourrait ajouter un verrou par partie ou rendre les objets `Player` immuables.
-
-## `BroadcastService`
+## `BroadcastService` : registre WebSocket
 
 Classe :
 
@@ -202,9 +271,9 @@ Classe :
 com.nmeo.services.BroadcastService
 ```
 
-Cette classe gere les connexions WebSocket et l'envoi des messages aux joueurs.
+`BroadcastService` gere les connexions WebSocket.
 
-Elle contient plusieurs maps concurrentes :
+Il contient plusieurs maps :
 
 ```java
 private final Map<UUID, WsContext> sessionsBySocket = new ConcurrentHashMap<>();
@@ -213,58 +282,40 @@ private final Map<UUID, UUID> gameBySocket = new ConcurrentHashMap<>();
 private final Map<UUID, Set<UUID>> socketsByGame = new ConcurrentHashMap<>();
 ```
 
-Role de chaque map :
+Ces maps sont thread-safe individuellement.
 
-- `sessionsBySocket` : retrouve la connexion WebSocket a partir du socket UUID ;
-- `socketBySessionId` : retrouve le socket UUID a partir de l'identifiant de session Javalin ;
-- `gameBySocket` : sait dans quelle partie se trouve un socket ;
-- `socketsByGame` : sait quels sockets sont connectes a une partie.
-
-Ces structures sont modifiees quand un joueur rejoint, quitte ou change de partie.
-
-### Set thread-safe
-
-Pour stocker les sockets d'une partie, le code utilise :
+Mais une inscription ou une desinscription modifie plusieurs maps en meme temps. Pour cela, `BroadcastService` utilise un verrou :
 
 ```java
-ConcurrentHashMap.newKeySet()
+private final ReentrantReadWriteLock registryLock = new ReentrantReadWriteLock();
 ```
 
-C'est important.
+### Inscription et desinscription
 
-Une `ConcurrentHashMap` qui contient un `HashSet` classique ne serait pas suffisante, car le `HashSet` ne serait pas thread-safe.
+Les methodes suivantes utilisent le write lock :
 
-Ici, le set lui-meme est compatible avec les acces concurrents.
+- `registerPlayerSession(...)`
+- `unregister(...)`
 
-## `AccountService`
+Cela garantit que les maps restent synchronisees entre elles.
 
-Classe :
+Exemple : si un socket change de partie, il doit etre retire de l'ancien set et ajoute au nouveau set. Ces operations doivent etre coherentes.
+
+### Broadcast
+
+Les broadcasts ne gardent pas le verrou pendant l'envoi reseau.
+
+Le service prend d'abord un snapshot :
 
 ```java
-com.nmeo.services.impl.AccountService
+List.copyOf(sockets)
 ```
 
-Cette classe gere les routes HTTP :
+Puis il envoie les messages hors du verrou.
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
-- `PATCH /auth/me`
-- `GET /shop`
-- `POST /shop/buy`
+C'est important pour la performance. Un envoi WebSocket peut etre lent. On ne veut pas bloquer les connexions/deconnexions pendant tout l'envoi reseau.
 
-Elle ne fait plus directement toutes les requetes SQL.
-
-Son role est surtout :
-
-- lire la requete HTTP ;
-- valider les donnees ;
-- appeler `AccountRepository` ;
-- renvoyer la reponse HTTP.
-
-Ce decoupage rend le code plus lisible et plus facile a tester.
-
-## `AccountRepository`
+## `AccountRepository` : comptes, pieces et skins
 
 Classe :
 
@@ -272,153 +323,132 @@ Classe :
 com.nmeo.services.account.AccountRepository
 ```
 
-Cette classe gere les acces PostgreSQL.
-
-Pour les comptes, la thread safety ne repose pas principalement sur `ConcurrentHashMap`. Elle repose surtout sur PostgreSQL, les transactions et les contraintes SQL.
+Cette classe gere les requetes SQL.
 
 ### Creation de compte
 
-La creation de compte est faite dans une transaction :
+La creation de compte est transactionnelle :
 
-```java
-connection.setAutoCommit(false);
-insert account
-grant skin
-find account
-connection.commit();
-```
+1. creer le compte ;
+2. donner le skin de depart ;
+3. relire le compte ;
+4. commit.
 
-Le but est que la creation soit coherente.
-
-Un compte cree doit aussi recevoir son skin de depart. La transaction permet de grouper ces operations.
-
-La table `accounts` a aussi une contrainte unique sur `username` :
+La table `accounts` a une contrainte unique :
 
 ```sql
 username text not null unique
 ```
 
-Donc deux threads ne peuvent pas creer deux comptes avec le meme pseudo. Si deux requetes arrivent en meme temps, PostgreSQL en acceptera une et refusera l'autre.
+Donc deux requetes concurrentes ne peuvent pas creer le meme pseudo.
+
+### Suppression de compte
+
+La suppression passe par :
+
+```java
+delete from accounts where id = ?
+```
+
+Les tables liees utilisent `on delete cascade`.
+
+Cela veut dire que PostgreSQL supprime aussi les lignes liees au compte, par exemple :
+
+- skins possedes ;
+- recompenses deja donnees.
 
 ### Achat de skin
 
-L'achat de skin est une zone importante pour la thread safety.
+L'achat de skin est une operation sensible, car elle touche l'argent du compte.
 
-Probleme possible :
+La strategie actuelle :
 
-1. Un compte a 600 pieces.
-2. Deux requetes d'achat arrivent en meme temps.
-3. Les deux voient 600 pieces.
-4. Les deux depensent 600 pieces.
+1. ouvrir une transaction ;
+2. verrouiller la ligne du compte avec `select coins from accounts where id = ? for update` ;
+3. verifier que le compte a assez de pieces ;
+4. inserer le skin avec `on conflict do nothing` ;
+5. debiter les pieces seulement si le skin a vraiment ete ajoute ;
+6. commit.
 
-Pour eviter cela, le code utilise une requete SQL atomique :
+Cela evite deux bugs importants :
 
-```sql
-update accounts
-set coins = coins - ?
-where id = ? and coins >= ?
-```
-
-Cette requete fait deux choses ensemble :
-
-- verifier que le compte a assez de pieces ;
-- retirer les pieces.
-
-Comme PostgreSQL gere les verrous de lignes, deux achats concurrents ne peuvent pas depenser deux fois les memes pieces.
-
-Si le premier achat retire les pieces, le deuxieme achat ne satisfait plus `coins >= ?` et ne retire rien.
+- deux achats paralleles ne peuvent pas depenser les memes pieces ;
+- acheter deux fois le meme skin ne debite pas deux fois.
 
 ### Recompenses de fin de partie
 
-Les recompenses utilisent la table `account_rewards`.
-
-La table a une cle primaire :
+Les recompenses utilisent une cle primaire :
 
 ```sql
 primary key(account_id, game_id)
 ```
 
-Et l'insertion utilise :
+L'insertion utilise :
 
 ```sql
 on conflict do nothing
 ```
 
-Cela rend l'operation idempotente.
+Donc si la meme recompense est tentee deux fois, une seule est acceptee.
 
-Idempotente veut dire qu'on peut appeler l'operation plusieurs fois sans changer le resultat apres la premiere fois.
+C'est ce qu'on appelle une operation idempotente.
 
-Exemple :
+## Tests de concurrence
 
-- un joueur doit recevoir 100 pieces pour un round ;
-- deux threads essaient d'ajouter la meme recompense ;
-- le premier insert reussit ;
-- le deuxieme tombe sur le conflit `(account_id, game_id)` et ne fait rien.
-
-Donc un compte ne recoit pas deux fois la meme recompense.
-
-## `PasswordHasher`
-
-Classe :
+Les tests de concurrence sont dans :
 
 ```java
-com.nmeo.services.account.PasswordHasher
+com.nmeo.services.GameServiceTest
 ```
 
-Cette classe gere le hash des mots de passe.
+Ils verifient notamment :
 
-Elle n'est pas le coeur de la thread safety du gameplay, mais elle est importante pour le bouton de creation de compte.
+- que deux threads qui appellent la fin de partie ne declenchent la recompense qu'une seule fois ;
+- que deux creations concurrentes avec le meme player uuid ne creent qu'un seul joueur.
 
-Avant, le hash etait couteux avec beaucoup d'iterations PBKDF2. Cela ralentissait fortement la creation de compte.
+Ces tests ne prouvent pas tous les cas possibles, mais ils couvrent les races les plus dangereuses du gameplay.
 
-Maintenant, le nombre d'iterations des nouveaux comptes est configurable avec :
+## Ce que la strategie garantit
 
-```text
-DO_ROYAL_PASSWORD_HASH_ITERATIONS
-```
+La strategie actuelle garantit :
 
-Le hash stocke le nombre d'iterations utilisees. Cela permet de verifier les anciens comptes et les nouveaux comptes correctement.
+- pas de corruption des maps globales ;
+- pas de doublon de partie avec le meme UUID ;
+- transitions de partie coherentes par `GameSession` ;
+- owner coherent pendant les joins/leaves ;
+- fin de partie declenchee une seule fois ;
+- registre WebSocket coherent ;
+- broadcasts sans verrou long ;
+- achats de skin atomiques ;
+- recompenses idempotentes ;
+- suppression de compte propre via cascade SQL.
 
-## Ce qui est bien protege
+## Limites restantes
 
-Le projet protege correctement :
+La strategie est solide pour ce projet, mais elle n'est pas une architecture temps reel parfaite.
 
-- la map des parties ;
-- les maps de joueurs et de balles ;
-- les associations WebSocket ;
-- les sets de sockets par partie ;
-- la creation d'une partie avec un identifiant deja pris ;
-- l'unicite des pseudos ;
-- l'achat de skins avec les pieces ;
-- les recompenses de fin de partie.
+Limites connues :
 
-## Ce qui reste moins strict
+- `Player` reste un objet mutable ;
+- certains objets envoyes au frontend peuvent etre des references directes ;
+- il n'y a pas encore de boucle d'evenements unique par partie ;
+- il n'y a pas encore de copie immutable systematique avant broadcast.
 
-Certaines parties sont thread-safe de maniere pragmatique, mais pas parfaitement verrouillees.
+Pour aller encore plus loin, on pourrait :
 
-Exemples :
-
-- `Player` est mutable ;
-- `GameSession` contient des champs mutables comme le status, le gagnant, le round et l'owner ;
-- certaines operations de gameplay font plusieurs etapes separees.
-
-Cela veut dire que le serveur evite les gros problemes, comme les maps cassees ou l'argent duplique, mais il peut encore y avoir de petites incoherences temporaires dans l'etat de jeu.
-
-Pour un jeu temps reel, ce compromis est souvent acceptable.
-
-## Amelioration possible plus tard
-
-Si on voulait rendre la thread safety plus stricte, on pourrait choisir une de ces strategies :
-
-- ajouter un verrou par partie avec `synchronized` ou `ReentrantLock` ;
-- utiliser une file d'evenements par partie ;
 - rendre `Player` immutable ;
-- centraliser toutes les modifications d'une partie dans un seul thread ;
-- ajouter plus de tests concurrents.
+- envoyer des DTO copies au lieu des objets internes ;
+- utiliser une queue d'evenements par partie ;
+- ajouter des tests de charge avec beaucoup de sockets ;
+- mesurer la latence des locks sous stress.
 
-Pour ce projet, la strategie actuelle est simple et adaptee :
+## Resume simple
 
-- `ConcurrentHashMap` pour l'etat temps reel ;
-- operations atomiques quand c'est necessaire ;
-- transactions et contraintes PostgreSQL pour les donnees importantes.
+La strategie actuelle est :
+
+- `ConcurrentHashMap` pour les collections partagees ;
+- `ReentrantReadWriteLock` par partie pour les transitions de gameplay ;
+- `ReentrantReadWriteLock` sur le registre WebSocket pour garder les maps synchronisees ;
+- transactions et verrous PostgreSQL pour les comptes, pieces, skins et recompenses ;
+- aucun gros verrou global, pour garder l'application rapide.
 

@@ -487,6 +487,7 @@ export default class MenuScene extends Phaser.Scene {
             });
             input.addEventListener("blur", saveUsername);
             const logout = this.add.text(centerX - 190, centerY + 135, "Deconnexion").setColor("#ff6b6b").setFontSize(15).setInteractive();
+            const deleteAccount = this.add.text(centerX, centerY + 135, "Supprimer").setOrigin(0.5, 0).setColor("#ff6b6b").setFontSize(15).setInteractive();
             const close = this.add.text(centerX + 170, centerY + 135, "Fermer").setColor("#b7d8de").setFontSize(15).setInteractive();
             logout.on("clicked", () => {
                 this.authSession = null;
@@ -494,8 +495,9 @@ export default class MenuScene extends Phaser.Scene {
                 this.closeAuthPanel();
                 this.refreshAccount();
             });
+            deleteAccount.on("clicked", () => this.deleteCurrentAccount());
             close.on("clicked", () => this.closeAuthPanel());
-            this.authPanel.add([infoLabel, usernameLabel, usernameInput, coins, logout, close]);
+            this.authPanel.add([infoLabel, usernameLabel, usernameInput, coins, logout, deleteAccount, close]);
             return;
         }
 
@@ -587,6 +589,24 @@ export default class MenuScene extends Phaser.Scene {
             saveAuthSession(this.authSession);
             this.authMessageText.setText("Pseudo mis a jour.");
             this.updateAccountBar();
+        } catch(e) {
+            this.authMessageText.setText((e as Error).message);
+        }
+    }
+
+    async deleteCurrentAccount() {
+        if (this.authSession === null) {
+            return;
+        }
+        if (!window.confirm("Supprimer definitivement ce compte ?")) {
+            return;
+        }
+        try {
+            await this.authApi.deleteAccount(this.authSession.token);
+            this.authSession = null;
+            saveAuthSession(null);
+            this.closeAuthPanel();
+            this.refreshAccount();
         } catch(e) {
             this.authMessageText.setText((e as Error).message);
         }
