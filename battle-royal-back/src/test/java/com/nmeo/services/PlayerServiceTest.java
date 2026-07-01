@@ -122,6 +122,16 @@ public class PlayerServiceTest {
         assertTrue(json.get("isAlive").asBoolean());
     }
 
+    @Test
+    public void shouldCopyPlayersInMovementBatchMessage() {
+        Player player = player("player-1");
+        WebSocketMessage message = WebSocketMessage.playersMoved(UUID.randomUUID(), List.of(player));
+
+        player.setName("Mutated outside message");
+
+        assertEquals("player-1", message.getPlayers().get(0).getName());
+    }
+
     private Player player(String uuid) {
         return player(uuid, 0, 0);
     }

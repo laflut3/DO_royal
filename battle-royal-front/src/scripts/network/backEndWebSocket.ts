@@ -6,9 +6,9 @@ import Player, { PlayerInterface } from "../objects/player";
 import MainScene from "../scenes/mainScene";
 
 
-const PLAYER_UPDATE_MIN_INTERVAL_MS = 100;
-const PLAYER_UPDATE_FORCE_INTERVAL_MS = 500;
-const PLAYER_POSITION_EPSILON = 0.5;
+const PLAYER_UPDATE_MIN_INTERVAL_MS = 50;
+const PLAYER_UPDATE_FORCE_INTERVAL_MS = 250;
+const PLAYER_POSITION_EPSILON = 0.25;
 
 export enum MessageType {
     NEW_PLAYER  = 1,
@@ -134,7 +134,7 @@ export default class BackEndWebSocket {
             } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.CHAT_MESSAGE) {
                 this.chatMessageHandler(message);
             } else if (message[KeyWords.MESSAGE_TYPE] === MessageType.PLAYER_MOVED) {
-                this.playerMovedHandler(message[KeyWords.PLAYER_INFO]);
+                this.playerMovedHandler(message[KeyWords.PLAYER_INFO], message[KeyWords.PLAYERS_INFO]);
             }
         };
 
@@ -234,15 +234,19 @@ export default class BackEndWebSocket {
         this.multiPlayer.updateFromServer(this.otherPlayerMap);
     }
 
-    playerMovedHandler(messagePlayer: any) {
-        if(messagePlayer === undefined || messagePlayer === null) {
-            return;
+    playerMovedHandler(messagePlayer: any, messagePlayers: any) {
+        if(Array.isArray(messagePlayers)) {
+            messagePlayers.forEach((player) => this.upsertRemotePlayer(player));
+        } else if(messagePlayer !== undefined && messagePlayer !== null) {
+            this.upsertRemotePlayer(messagePlayer);
         }
-        this.upsertRemotePlayer(messagePlayer);
         this.multiPlayer.updateFromServer(this.otherPlayerMap);
     }
 
     private upsertRemotePlayer(element: any) {
+        if(element === undefined || element === null || element["uuid"] === this.currentPlayer.uuid) {
+            return;
+        }
         let playerMulti : PlayerInterface | undefined = this.otherPlayerMap.get(element["uuid"]);
         if(playerMulti != undefined) {
             // Update existing player

@@ -9,6 +9,7 @@ import com.nmeo.handlers.SocketHandler;
 import com.nmeo.infrastructure.VaultEnvironment;
 import com.nmeo.services.BroadcastService;
 import com.nmeo.services.IPlayerService;
+import com.nmeo.services.MovementBroadcastService;
 import com.nmeo.services.impl.AccountService;
 import com.nmeo.services.impl.GameService;
 import com.nmeo.services.impl.PlayerService;
@@ -26,6 +27,8 @@ public class App {
         gameService.setFinishListener(accountService::rewardFinishedGame);
         IPlayerService playerService = new PlayerService(gameService, accountService);
         BroadcastService broadcastService = new BroadcastService();
+        MovementBroadcastService movementBroadcastService = new MovementBroadcastService(broadcastService);
+        Runtime.getRuntime().addShutdownHook(new Thread(movementBroadcastService::close));
 
         String serverPort = System.getProperty("SERVER_PORT", System.getenv("SERVER_PORT"));
         int port = serverPort != null ? Integer.parseInt(serverPort) : 8080;
@@ -38,10 +41,21 @@ public class App {
                 SocketHandler.handleNewConnection(ctx, broadcastService);
             });
             ws.onMessage(ctx -> {
-                SocketHandler.handleNewMessage(ctx, playerService, gameService, broadcastService, accountService);
+                SocketHandler.handleNewMessage(
+                        ctx,
+                        playerService,
+                        gameService,
+                        broadcastService,
+                        movementBroadcastService,
+                        accountService);
             });
             ws.onClose(ctx -> {
-                SocketHandler.handleCloseConnection(ctx, playerService, gameService, broadcastService);
+                SocketHandler.handleCloseConnection(
+                        ctx,
+                        playerService,
+                        gameService,
+                        broadcastService,
+                        movementBroadcastService);
                 logger.debug("onClose");
             });
         }).start(port);

@@ -10,6 +10,7 @@ import com.nmeo.models.Player;
 import com.nmeo.services.BroadcastService;
 import com.nmeo.services.BroadcastService.DisconnectedSession;
 import com.nmeo.services.IPlayerService;
+import com.nmeo.services.MovementBroadcastService;
 import com.nmeo.services.impl.AccountService;
 import com.nmeo.services.impl.GameService;
 import com.nmeo.services.impl.PlayerService;
@@ -30,7 +31,8 @@ public class SocketHandler {
             WsCloseContext ctx,
             IPlayerService playerService,
             GameService gameService,
-            BroadcastService broadcastService) {
+            BroadcastService broadcastService,
+            MovementBroadcastService movementBroadcastService) {
         logger.info("Web socket closed");
         DisconnectedSession disconnectedSession = broadcastService.unregister(ctx);
         if (disconnectedSession == null) {
@@ -40,6 +42,7 @@ public class SocketHandler {
         UUID gameId = playerService.removePlayer(disconnectedSession.getSocketUuid());
         if (gameId != null) {
             if (gameService.removeIfEmpty(gameId)) {
+                movementBroadcastService.removeGame(gameId);
                 logger.info("Game {} removed because it has no players anymore", gameId);
                 return;
             }
@@ -52,6 +55,7 @@ public class SocketHandler {
             IPlayerService playerService,
             GameService gameService,
             BroadcastService broadcastService,
+            MovementBroadcastService movementBroadcastService,
             AccountService accountService) {
         WebSocketMessage newMessage = ctx.message(WebSocketMessage.class);
         logger.debug("handleNewMessage type={} gameId={}", newMessage.getType(), newMessage.getGameId());
@@ -87,10 +91,7 @@ public class SocketHandler {
                         gameService.updateFinishedState(newMessage.getGameId());
                         broadcastService.broadcastGameState(newMessage.getGameId(), playerService, gameService);
                     } else {
-                        broadcastService.broadcastMessageInGameExcept(
-                                newMessage.getGameId(),
-                                newMessage.getSocketUuid(),
-                                WebSocketMessage.playerMoved(newMessage.getGameId(), newMessage.getPlayer()));
+                        movementBroadcastService.queuePlayerMove(newMessage.getGameId(), newMessage.getPlayer());
                     }
                     break;
                 case PLAYER_DESTROY:

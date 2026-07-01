@@ -78,6 +78,16 @@ public class WebSocketMessage {
         return message;
     }
 
+    public static WebSocketMessage playersMoved(UUID gameId, List<Player> players) {
+        WebSocketMessage message = new WebSocketMessage();
+        message.setType(MessageType.PLAYER_MOVED);
+        message.setGameId(gameId);
+        message.setPlayers(players.stream()
+                .map(Player::copyOf)
+                .toList());
+        return message;
+    }
+
     public static WebSocketMessage chatMessage(UUID gameId, String playerUuid, String playerName, String chatMessage) {
         WebSocketMessage message = new WebSocketMessage();
         message.setType(MessageType.CHAT_MESSAGE);
