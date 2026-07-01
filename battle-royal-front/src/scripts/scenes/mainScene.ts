@@ -54,6 +54,7 @@ export default class MainScene extends Phaser.Scene {
   playerUuid : string
   playerSkinTint : number
   playerAtlas : string
+  authToken : string | null
   battleZoneCenter : Phaser.Math.Vector2
   battleZoneMaxRadius : number
   battleZoneMinRadius : number
@@ -99,6 +100,7 @@ export default class MainScene extends Phaser.Scene {
     this.gameOwner = data["gameOwner"];
     this.playerSkinTint = data["skinTint"] || 0xffffff;
     this.playerAtlas = data["playerAtlas"] || "misa";
+    this.authToken = data["authToken"] || null;
   }
 
   create() {
@@ -157,7 +159,8 @@ export default class MainScene extends Phaser.Scene {
       this.gameUuid,
       this.gameFinished.bind(this),
       this.markRemoteShooterOnMinimap.bind(this),
-      this.receiveChatMessage.bind(this)
+      this.receiveChatMessage.bind(this),
+      this.authToken
     );
     this.previousGameStatus = this.backEndWebSocket.gameStatus;
 

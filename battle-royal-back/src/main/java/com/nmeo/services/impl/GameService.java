@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import com.nmeo.models.Bullet;
 import com.nmeo.models.Game;
@@ -16,6 +17,11 @@ import com.nmeo.models.Player;
 
 public class GameService {
     private final Map<UUID, GameSession> sessions = new ConcurrentHashMap<>();
+    private Consumer<GameSession> finishListener = session -> {};
+
+    public void setFinishListener(Consumer<GameSession> finishListener) {
+        this.finishListener = finishListener == null ? session -> {} : finishListener;
+    }
 
     public void createGame(UUID gameId, String gameName) {
         createGame(gameId, gameName, Game.DEFAULT_MAP_ID, Game.DEFAULT_MAP_NAME);
@@ -152,6 +158,7 @@ public class GameService {
         if (alivePlayers.size() == 1) {
             session.setStatus(GameStatus.FINISHED);
             session.setWinnerName(alivePlayers.get(0).getName());
+            finishListener.accept(session);
         }
     }
 

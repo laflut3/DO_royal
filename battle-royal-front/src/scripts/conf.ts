@@ -27,4 +27,11 @@ export default class FrontConf {
         const port = secure ? "" : `:${this.backEndPort}`;
         return `${protocol}://${this.backEndIp}${port}/game`;
     }
+
+    httpApiUrl(): string {
+        const secure = window.location.protocol === "https:";
+        const protocol = secure ? "https" : "http";
+        const port = secure ? "" : `:${this.backEndPort}`;
+        return `${protocol}://${this.backEndIp}${port}`;
+    }
 }

@@ -36,7 +36,8 @@ export enum KeyWords {
     PLAYER_UUID = "playerUuid",
     PLAYER_NAME = "playerName",
     MAP_ID = "mapId",
-    MAP_NAME = "mapName"
+    MAP_NAME = "mapName",
+    AUTH_TOKEN = "authToken"
 }
 
 export enum GameStatus {
@@ -66,9 +67,10 @@ export default class BackEndWebSocket {
     ownerPlayerUuid : string
     isOwner : boolean
     playerUuids : Array<string>
+    authToken : string | null
 
 
-    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any) {
+    constructor(player : Player, multiPlayer : MultiPlayers, bulletsGroup : BulletGroup, gameUuid: string, finishCallback : any, remoteBulletCallback? : any, chatCallback? : any, authToken: string | null = null) {
 
         this.otherPlayerMap = new Map<string, PlayerInterface>();
         this.multiPlayer = multiPlayer;
@@ -87,6 +89,7 @@ export default class BackEndWebSocket {
         this.ownerPlayerUuid = "";
         this.isOwner = false;
         this.playerUuids = new Array<string>();
+        this.authToken = authToken;
 
         this.webSocket.onopen = (ev: Event) => {
             this.registerPlayer(player);
@@ -138,6 +141,9 @@ export default class BackEndWebSocket {
         message[KeyWords.MESSAGE_TYPE] = MessageType.NEW_PLAYER;
         message[KeyWords.PLAYER_INFO] = jsonObject;
         message[KeyWords.GAME_ID] = this.gameUuid;
+        if(this.authToken !== null) {
+            message[KeyWords.AUTH_TOKEN] = this.authToken;
+        }
         this.webSocket.send(JSON.stringify(message));
     }
 

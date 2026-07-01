@@ -39,6 +39,7 @@ public class WebSocketMessage {
     private String chatMessage;
     private String playerUuid;
     private String playerName;
+    private String authToken;
 
     public static WebSocketMessage gameState(UUID gameId, GameStatus gameStatus, String winnerName, String ownerPlayerUuid, List<String> playerUuids, List<Player> players) {
         WebSocketMessage message = new WebSocketMessage();

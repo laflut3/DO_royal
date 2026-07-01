@@ -31,7 +31,8 @@ export interface PlayerInterface {
     maxHealth : number,
     shield : number,
     maxShield : number,
-    skinTint : number
+    skinTint : number,
+    accountId? : number
 }
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -62,6 +63,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     maxStamina : number
     lastStaminaUpdate : number
     skinTint : number
+    accountId? : number
     nameText : Phaser.GameObjects.Text
     shieldBarBackground : Phaser.GameObjects.Rectangle
     shieldBarFill : Phaser.GameObjects.Rectangle
@@ -268,7 +270,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             maxHealth : this.maxHealth,
             shield : Math.ceil(this.shield),
             maxShield : this.maxShield,
-            skinTint : this.skinTint
+            skinTint : this.skinTint,
+            accountId : this.accountId
         }
         return returnValue;
     }
